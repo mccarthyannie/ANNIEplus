@@ -1,0 +1,13 @@
+services:
+  database: 
+    image: postgres:18.2-alpine3.22
+    container_name: annie_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - annie_db:/var/lib/postgresql/data
+    env_file: 
+      - ./AnnieDB/.env
+
+volumes:
+  annie_db:
