@@ -9,12 +9,13 @@ using Annie_API.Models;
 
 namespace Annie_API.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Sessions")]
     [ApiController]
     public class SessionsController : ControllerBase
     {
         private readonly SessionContext _context;
 
+        // Dependency injection of the SessionContext to interact with the database
         public SessionsController(SessionContext context)
         {
             _context = context;
@@ -80,7 +81,7 @@ namespace Annie_API.Controllers
             _context.Sessions.Add(session);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetSession", new { id = session.Id }, session);
+            return CreatedAtAction(nameof(GetSession), new { id = session.Id }, session);
         }
 
         // DELETE: api/Sessions/5

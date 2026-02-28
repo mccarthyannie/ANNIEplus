@@ -1,6 +1,34 @@
 @Annie_API_HostAddress = http://localhost:5121
 
-GET {{Annie_API_HostAddress}}/weatherforecast/
-Accept: application/json
+POST {{Annie_API_HostAddress}}/api/sessions
+Content-Type: application/json
+
+{
+  "name": "Test Session",
+  "starttime": "2024-06-01T10:00:00Z",
+  "capacity": 10,
+  "instructors": ["Me"]
+}
+
+###
+
+GET {{Annie_API_HostAddress}}/api/sessions
+
+###
+
+@id=1
+GET {{Annie_API_HostAddress}}/api/sessions/{{id}}
+
+###
+
+POST {{Annie_API_HostAddress}}/api/sessions
+Content-Type: application/json
+
+{
+  "name": "Test Session2",
+  "starttime": "2024-06-01T10:00:00Z",
+  "capacity": 20,
+  "instructors": ["You"]
+}
 
 ###
