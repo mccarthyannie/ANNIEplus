@@ -20,32 +20,20 @@
     // select instructor from list of instructors in the database
     <div class="form-group mb-3">
         <label>Instructor:</label>
-        <InputSelect @bind-Value="session.InstructorId" class="form-control">
-        <option value="0">Choose Instructor</option>
-        @foreach (var instructor in Instructors)
-        {
-            <option value="@instructor.Id">@instructor.Name</option>
-        }
-        </InputSelect>
+        <input class="form-control" @onchange="HandleInstructorChange" placeholder="e.g. Annie, Bob" />
     </div>
 
     // select location from list of locations in the database
     <div class="form-group mb-3">
         <label>Location:</label>
-        <InputSelect @bind-Value="session.LocationId" class="form-control">
-            <option value="0">Choose Location</option>
-            @foreach (var location in Locations)
-            {
-                <option value="@location.Id">@location.Name</option>
-            }
-        </InputSelect>
+        <InputText @bind-Value="session.Location" class="form-control" />
     </div>
     
     // input for session description
     <div class="form-group mb-3">
         <label>Session Description:</label>
-        <InputText @bind-Value="session.Description" class="form-control" rows="3"/>
-        <ValidationMessage For="@(() => SessionModel.SessionDescription)" />
+        <InputTextArea @bind-Value="session.Description" class="form-control" rows="3"/>
+        <ValidationMessage For="@(() => session.Description)" />
     </div>
 
     // select the date
@@ -92,7 +80,15 @@
 
     private bool submitted = false;
     private string? errorMessage;
-    private string? lastCreatedName;
+
+    private void HandleInstructorChange(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        if (!string.IsNullOrWhiteSpace(val))
+        {
+            session.Instructors = val.Split(',').Select(s => s.Trim()).ToList();
+        }
+    }
 
     private async Task HandleSubmit()
     {
@@ -113,7 +109,6 @@
             var response = await Http.PostAsJsonAsync("api/Sessions", session);
             if (response.IsSuccessStatusCode)
             {
-                lastCreatedName = session.Name;
                 submitted = true;
                 errorMessage = null;
 
