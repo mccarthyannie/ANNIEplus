@@ -11,6 +11,8 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<SessionContext>(opt =>
     opt.UseInMemoryDatabase("AnnieDB"));
+builder.Services.AddDbContext<UserContext>(opt =>
+    opt.UseInMemoryDatabase("AnnieDB"));
 builder.Services.AddSyncfunsion.Blazor();
 
 var app = builder.Build();

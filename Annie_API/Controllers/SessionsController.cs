@@ -6,6 +6,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Annie_API.Controllers
 {
@@ -28,6 +31,28 @@ namespace Annie_API.Controllers
             return await _context.Sessions.ToListAsync();
         }
 
+        // GET: api/Sessions/month/november
+        [HttpGet("month/{month}")]
+        public async Task<ActionResult<IEnumerable<Session> >> GetSession(int month, int year=0)
+        {
+            if (month < 1 || month > 12)
+            {
+                return BadRequest("Invalid month. Please provide a value between 1 and 12.");
+            }
+            
+            if(year == 0) year = DateTime.Now.Year;
+            var monthStart = new DateTime(year, month, 1);
+            var nextMonthStart = monthStart.AddMonths(1);
+
+            var query = _context.Sessions
+                        .Where(s =>
+                            (s.StartTime >= monthStart &&
+                             s.StartTime < nextMonthStart))
+                        .OrderBy(s => s.StartTime);
+
+            return await query.ToListAsync();
+        }
+
         // GET: api/Sessions/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Session>> GetSession(long id)
@@ -45,6 +70,7 @@ namespace Annie_API.Controllers
         // PUT: api/Sessions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
+        [Authorize]
         public async Task<IActionResult> PutSession(long id, Session session)
         {
             if (id != session.Id)
@@ -76,6 +102,7 @@ namespace Annie_API.Controllers
         // POST: api/Sessions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize]
         public async Task<ActionResult<Session>> PostSession(Session session)
         {
             _context.Sessions.Add(session);
@@ -86,6 +113,7 @@ namespace Annie_API.Controllers
 
         // DELETE: api/Sessions/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteSession(long id)
         {
             var session = await _context.Sessions.FindAsync(id);
