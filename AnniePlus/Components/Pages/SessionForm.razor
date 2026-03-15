@@ -10,33 +10,40 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
    
-    // input for session name
+    @*input for session name*@
     <div class="form-group mb-3">
         <label>Session Name:</label>
         <InputText @bind-Value="session.Name" class="form-control" />
         <ValidationMessage For="@(() => session.Name)" />
     </div>
 
-    // select instructor from list of instructors in the database
+    @*select instructor from list of instructors in the database*@
     <div class="form-group mb-3">
-        <label>Instructor:</label>
-        <input class="form-control" @onchange="HandleInstructorChange" placeholder="e.g. Annie, Bob" />
-    </div>
+    <label>Instructors (comma separated):</label>
+    <input class="form-control" @onchange="HandleInstructorChange" placeholder="Annie, Agustin" />
+    </div>>
 
-    // select location from list of locations in the database
+    @*select location from list of locations in the database*@
     <div class="form-group mb-3">
         <label>Location:</label>
         <InputText @bind-Value="session.Location" class="form-control" />
     </div>
+
+    @*input for session capacity*@
+    <div class="form-group mb-3">
+    <label>Class Capacity:</label>
+    <InputNumber @bind-Value="session.Capacity" class="form-control" />
+    <ValidationMessage For="@(() => session.Capacity)" />
+    </div>
     
-    // input for session description
+    @*input for session description*@
     <div class="form-group mb-3">
         <label>Session Description:</label>
         <InputTextArea @bind-Value="session.Description" class="form-control" rows="3"/>
         <ValidationMessage For="@(() => session.Description)" />
     </div>
 
-    // select the date
+    @*select the date*@
     <div class="row mb-3">
         <div class="col-12">
             <label>Session Date:</label>
@@ -44,7 +51,7 @@
         </div>
     </div>
 
-    // select the start and end time
+    @*select the start and end time*@
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Start Time:</label>
@@ -79,9 +86,6 @@
         Status = SessionStatus.Available,
     };
 
-    private bool submitted = false;
-    private string? errorMessage;
-
     private void HandleInstructorChange(ChangeEventArgs e)
     {
         var val = e.Value?.ToString();
@@ -93,6 +97,11 @@
 
     private async Task HandleSubmit()
     {
+        if (session.Instructors == null || !session.Instructors.Any())
+        {
+            session.Instructors = new List<string> { "TBD" };
+        }
+
         session.EndTime = new DateTime(
             session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, 
             session.EndTime.Hour, session.EndTime.Minute, 0

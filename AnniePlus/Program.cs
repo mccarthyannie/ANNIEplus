@@ -10,7 +10,7 @@ builder.Services.AddRazorComponents()
 builder.Services.AddRadzenComponents();
 builder.Services.AddScoped(sp => new HttpClient
 {
-    BaseAddress = new Uri("https://localhost:5173/")
+    BaseAddress = new Uri("https://localhost:5013/")
 });
 
 // Enable static web assets when running from source (development).
