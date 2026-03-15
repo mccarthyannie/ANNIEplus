@@ -1,6 +1,5 @@
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
-using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
