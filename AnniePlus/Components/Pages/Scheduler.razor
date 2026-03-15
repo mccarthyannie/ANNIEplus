@@ -1,3 +1,6 @@
+@using Radzen
+@using Radzen.Blazor
+
 <RadzenScheduler @ref="scheduler" SlotSelect="OnSlotSelect" AppointmentSelect="OnAppointmentSelect"
                  Data="@appointments" TItem="Appointment" StartProperty="Start" EndProperty="End"
                  TextProperty="Text" Style="height: 600px;">
