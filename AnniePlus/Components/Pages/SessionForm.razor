@@ -86,6 +86,9 @@
         Status = SessionStatus.Available,
     };
 
+    private bool submitted = false;
+    private string? errorMessage;
+
     private void HandleInstructorChange(ChangeEventArgs e)
     {
         var val = e.Value?.ToString();
