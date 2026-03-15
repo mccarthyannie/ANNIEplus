@@ -1,5 +1,8 @@
 @page "/create-session"
 @using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
 
 <h3>Create Session</h3>
 
@@ -10,8 +13,8 @@
     // input for session name
     <div class="form-group mb-3">
         <label>Session Name:</label>
-        <InputText @bind-Value="session.SessionName" class="form-control" />
-        <ValidationMessage For="@(() => Session.SessionName)" />
+        <InputText @bind-Value="session.Name" class="form-control" />
+        <ValidationMessage For="@(() => Session.Name)" />
     </div>
 
     // select instructor from list of instructors in the database
@@ -41,7 +44,7 @@
     // input for session description
     <div class="form-group mb-3">
         <label>Session Description:</label>
-        <InputText @bind-Value="session.SessionDescription" class="form-control" rows="3"/>
+        <InputText @bind-Value="session.Description" class="form-control" rows="3"/>
         <ValidationMessage For="@(() => SessionModel.SessionDescription)" />
     </div>
 
@@ -73,46 +76,32 @@
 @if (submitted)
 {
     <div class"alert alert-success mt-3">
-        <p>Your session "@session.SessionName" has been made.</p>
+        <p>Your session "@session.Name" has been made.</p>
     </div>
 }
 
 @code {
     [SupplyParameterFromForm]
-    private SessionModel session { get; set; } = new() 
+    private Session sessionForm { get; set; } = new() 
     {
-        StartTime = DateTime.Today.AddHours(9),
-        EndTime = DateTime.Today.AddHours(10)
+        StartTime = DateTime.Today.AddHours(9),,
+        EndTime = DateTime.Today.AddHours(10),
+        Instructors = new List<string>(),
+        Capacity = 45
     };
 
     private bool submitted = false;
     private string? errorMessage;
-    private List<Instructor> Instructors = new();
-    private List<Location> Locations = new();
-
-    [Inject] private AppDbContext Context { get; set; } = default!;
-
-    protected override async Task OnInitializedAsync()
-    {
-        try 
-        {
-            Instructors = await Context.Instructors.OrderBy(i => i.Name).ToListAsync();
-            Locations = await Context.Locations.OrderBy(l => l.Name).ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            errorMessage = $"Error loading data: {ex.Message}";
-        }
-    }
+    private string? lastCreatedName;
 
     private async Task HandleSubmit()
     {
-        session.EndTime = new DateTime(
-            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, 
-            session.EndTime.Hour, session.EndTime.Minute, 0
+        sessionForm.EndTime = new DateTime(
+            sessionForm.StartTime.Year, sessionForm.StartTime.Month, sessionForm.StartTime.Day, 
+            sessionForm.EndTime.Hour, sessionForm.EndTime.Minute, 0
         );
 
-        if (session.EndTime <= session.StartTime)
+        if (sessionForm.EndTime <= sessionForm.StartTime)
         {
             errorMessage = "Error: The session cannot end before it starts!";
             submitted = false;
@@ -121,22 +110,24 @@
 
         try 
         {
-            var dbSession = new Session
+            var response = await Http.PostAsJsonAsync("api/Sessions", sessionForm);
+            if (response.IsSuccessStatusCode)
             {
-                SessionName = session.SessionName,
-                SessionDescription = session.SessionDescription,
-                StartTime = session.StartTime,
-                EndTime = session.EndTime,
-                InstructorId = session.InstructorId,
-                LocationId = session.LocationId
-            };
+                lastCreatedName = sessionForm.Name;
+                submitted = true;
+                errorMessage = null;
 
-            Context.Sessions.Add(dbSession);
-            await Context.SaveChangesAsync();
-            
-            submitted = true;
-            errorMessage = null;
-            session = new SessionModel { StartTime = DateTime.Today.AddHours(9), EndTime = DateTime.Today.AddHours(10) };
+                sessionForm = new Session {
+                    StartTime = DateTime.Today.AddHours(9),
+                    EndTime = DateTime.Today.AddHours(10),
+                    Instructors = new List<string>(),
+                    Capacity = 45
+                };
+            }
+            else
+            {
+                errorMessage = $"Server error: {response.StatusCode}";
+            }
         }
         catch (Exception ex)
         {

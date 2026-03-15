@@ -1,31 +1,21 @@
-@using Radzen
-@using Radzen.Blazor
+@page "/scheduler"
+@using Annie_API.Models
+@inject HttpClient Http
 
-<RadzenScheduler @ref="scheduler" SlotSelect="OnSlotSelect" AppointmentSelect="OnAppointmentSelect"
-                 Data="@appointments" TItem="Appointment" StartProperty="Start" EndProperty="End"
-                 TextProperty="Text" Style="height: 600px;">
+<RadzenSchedulerData="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
     <RadzenMonthView />
     <RadzenWeekView />
-    <RadzenDayView />
 </RadzenScheduler>
 
 @code {
-    RadzenScheduler<Appointment> scheduler;
-    
-    public class Appointment {
-        public DateTime Start { get; set; }
-        public DateTime End { get; set; }
-        public string Text { get; set; }
-    }
+    private List<Session> sessions = new();
 
-    List<Appointment> appointments = new();
-
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        appointments = Context.Sessions.Select(s => new Appointment {
-            Start = s.StartTime,
-            End = s.EndTime,
-            Text = s.SessionName
-        }).ToList();
+        var result = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+        if (result != null)
+        {
+            sessions = result;
+        }
     }
 }

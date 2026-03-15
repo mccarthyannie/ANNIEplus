@@ -8,6 +8,10 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 builder.Services.AddRadzenComponents();
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("https://localhost:5173/")
+});
 
 // Enable static web assets when running from source (development).
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
