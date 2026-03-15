@@ -75,7 +75,8 @@
         StartTime = DateTime.Today.AddHours(9),,
         EndTime = DateTime.Today.AddHours(10),
         Instructors = new List<string>(),
-        Capacity = 45
+        Capacity = 45,
+        Status = SessionStatus.Available,
     };
 
     private bool submitted = false;
@@ -116,7 +117,8 @@
                     StartTime = DateTime.Today.AddHours(9),
                     EndTime = DateTime.Today.AddHours(10),
                     Instructors = new List<string>(),
-                    Capacity = 45
+                    Capacity = 45,
+                    Status = SessionStatus.Available,
                 };
             }
             else
