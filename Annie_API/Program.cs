@@ -12,7 +12,6 @@ builder.Services.AddDbContext<SessionContext>(opt =>
     opt.UseInMemoryDatabase("AnnieDB"));
 builder.Services.AddDbContext<UserContext>(opt =>
     opt.UseInMemoryDatabase("AnnieDB"));
-builder.Services.AddRadzenComponents();
 
 var app = builder.Build();
 
