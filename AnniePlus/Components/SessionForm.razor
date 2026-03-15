@@ -1,0 +1,154 @@
+@page "/create-session"
+@inject AppDbCOntext Context
+
+<h3>Create Session</h3>
+<EditForm Model="@session" OnValidSubmit="@HandleSubmit" FormName="SessionForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+   
+    // input for session name
+    <div class="form-group mb-3">
+        <label>Session Name:</label>
+        <InputText @bind-Value="session.SessionName" class="form-control" />
+        <ValidationMessage For="@(() => Session.SessionName)" />
+    </div>
+
+    // select instructor from list of instructors in the database
+    <div class="form-group mb-3">
+        <label>Instructor:</label>
+        <InputSelect @bind-Value="session.InstructorId" class="form-control">
+        <option value="0">Choose Instructor</option>
+        @foreach (var instructor in Instructors)
+        {
+            <option value="@instructor.Id">@instructor.Name</option>
+        }
+        </InputSelect>
+    </div>
+
+    // select location from list of locations in the database
+    <div class="form-group mb-3">
+        <label>Location:</label>
+        <InputSelect @bind-Value="session.LocationId" class="form-control">
+            <option value="0">Choose Location</option>
+            @foreach (var location in Locations)
+            {
+                <option value="@location.Id">@location.Name</option>
+            }
+        </InputSelect>
+    </div>
+    
+    // input for session description
+    <div class="form-group mb-3">
+        <label>Session Description:</label>
+        <InputText @bind-Value="session.SessionDescription" class="form-control" rows="3"/>
+        <ValidationMessage For="@(() => SessionModel.SessionDescription)" />
+    </div>
+
+    // select the date
+    <div class="row mb-3">
+        <div class="col-12">
+            <label>Session Date:</label>
+            <InputDate Type="InputDateType.Date" @bind-Value="session.StartTime" class="form-control" />
+        </div>
+    </div>
+
+    // select the start and end time
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Start Time:</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="session.StartTime" class="form-control" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">End Time:</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="session.EndTime" class="form-control" />
+        </div>
+    </div>
+     
+    <button type="submit" class="btn btn-primary">Create Session</button>
+
+</EditForm>
+
+@if (submitted)
+{
+    <div class"alert alert-success mt-3">
+        <p>Your session "@session.SessionName" has been made.</p>
+    </div>
+}
+
+@code {
+    [SupplyParamterFromForm]
+    private SessionModel contactModel { get; set; } = new();
+    {
+        StartTime = DateTime.Today.AddHours(9),
+        EndTime = DateTime.Today.AddHours(10)
+    };
+
+    private bool submitted = false;
+    private string? errorMessage;
+
+    private void HandleSubmit()
+    {
+        session.EndTime = new DateTime(
+            session.StartTime.Year, 
+            session.StartTime.Month, 
+            session.StartTime.Day, 
+            session.EndTime.Hour, 
+            session.EndTime.Minute, 
+            0
+        );
+
+         if (session.EndTime <= session.StartTime)
+        {
+            errorMessage = "Error: The session cannot end before it starts!";
+            submitted = false;
+            return;
+        }
+        
+        var dbSession = new Session
+        {
+            SessionName = session.SessionName,
+            SessionDescription = session.SessionDescription,
+            StartTime = session.StartTime,
+            EndTime = session.EndTime,
+            InstructorId = session.InstructorId,
+            LocationId = session.LocationId
+        };
+
+        private List<Instructor> Instructors => Context.Instructors.ToList();
+        private List<Location> Locations => Context.Locations.ToList();
+
+        protected override async Task OnInitializedAsync()
+        {
+            try {
+                Instructors = await Context.Instructors.OrderBy(i => i.Name).ToListAsync();
+                Locations = await Context.Locations.OrderBy(j => j.Name).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"An error occurred while loading data: {ex.Message}";
+            
+            }
+        }
+
+        try 
+        {
+            Context.Sessions.Add(dbSession);
+            await Context.SaveChangesAsync();
+            submitted = true;
+            errorMessage = null;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while creating the session: {ex.Message}";
+            submitted = false;
+        
+        }
+
+        session = new SessionModel();
+        {
+            StartTime = DateTime.Today.AddHours(9),
+            EndTime = DateTime.Today.AddHours(10)
+        };
+    }
+}

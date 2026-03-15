@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
+using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<SessionContext>(opt =>
     opt.UseInMemoryDatabase("AnnieDB"));
+builder.Services.AddSyncfunsion.Blazor();
 
 var app = builder.Build();
 
