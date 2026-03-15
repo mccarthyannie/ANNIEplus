@@ -1,7 +1,9 @@
 @page "/create-session"
-@inject AppDbCOntext Context
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
 
 <h3>Create Session</h3>
+
 <EditForm Model="@session" OnValidSubmit="@HandleSubmit" FormName="SessionForm">
     <DataAnnotationsValidator />
     <ValidationSummary />
@@ -77,8 +79,8 @@
 }
 
 @code {
-    [SupplyParamterFromForm]
-    private SessionModel contactModel { get; set; } = new();
+    [SupplyParameterFromForm]
+    private SessionModel session { get; set; } = new() 
     {
         StartTime = DateTime.Today.AddHours(9),
         EndTime = DateTime.Today.AddHours(10)
@@ -86,69 +88,60 @@
 
     private bool submitted = false;
     private string? errorMessage;
+    private List<Instructor> Instructors = new();
+    private List<Location> Locations = new();
 
-    private void HandleSubmit()
+    [Inject] private AppDbContext Context { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try 
+        {
+            Instructors = await Context.Instructors.OrderBy(i => i.Name).ToListAsync();
+            Locations = await Context.Locations.OrderBy(l => l.Name).ToListAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
     {
         session.EndTime = new DateTime(
-            session.StartTime.Year, 
-            session.StartTime.Month, 
-            session.StartTime.Day, 
-            session.EndTime.Hour, 
-            session.EndTime.Minute, 
-            0
+            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, 
+            session.EndTime.Hour, session.EndTime.Minute, 0
         );
 
-         if (session.EndTime <= session.StartTime)
+        if (session.EndTime <= session.StartTime)
         {
             errorMessage = "Error: The session cannot end before it starts!";
             submitted = false;
             return;
         }
-        
-        var dbSession = new Session
-        {
-            SessionName = session.SessionName,
-            SessionDescription = session.SessionDescription,
-            StartTime = session.StartTime,
-            EndTime = session.EndTime,
-            InstructorId = session.InstructorId,
-            LocationId = session.LocationId
-        };
-
-        private List<Instructor> Instructors => Context.Instructors.ToList();
-        private List<Location> Locations => Context.Locations.ToList();
-
-        protected override async Task OnInitializedAsync()
-        {
-            try {
-                Instructors = await Context.Instructors.OrderBy(i => i.Name).ToListAsync();
-                Locations = await Context.Locations.OrderBy(j => j.Name).ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                errorMessage = $"An error occurred while loading data: {ex.Message}";
-            
-            }
-        }
 
         try 
         {
+            var dbSession = new Session
+            {
+                SessionName = session.SessionName,
+                SessionDescription = session.SessionDescription,
+                StartTime = session.StartTime,
+                EndTime = session.EndTime,
+                InstructorId = session.InstructorId,
+                LocationId = session.LocationId
+            };
+
             Context.Sessions.Add(dbSession);
             await Context.SaveChangesAsync();
+            
             submitted = true;
             errorMessage = null;
+            session = new SessionModel { StartTime = DateTime.Today.AddHours(9), EndTime = DateTime.Today.AddHours(10) };
         }
         catch (Exception ex)
         {
-            errorMessage = $"An error occurred while creating the session: {ex.Message}";
-            submitted = false;
-        
+            errorMessage = $"Error saving: {ex.Message}";
         }
-
-        session = new SessionModel();
-        {
-            StartTime = DateTime.Today.AddHours(9),
-            EndTime = DateTime.Today.AddHours(10)
-        };
     }
 }
