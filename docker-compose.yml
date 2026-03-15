@@ -9,8 +9,10 @@ services:
     container_name: annie_db
     ports:
       - "5432:5432"
+    environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
     volumes:
-      - annie_db:/var/lib/postgresql/data
+      - annie_vol:/var/lib/postgresql/data
     env_file: 
       - .env
 
@@ -26,4 +28,5 @@ services:
       environment:
         - ConnectionStrings__DefaultConnection=Host=database;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 volumes:
-  annie_db:
+  annie_vol:
+    external: false

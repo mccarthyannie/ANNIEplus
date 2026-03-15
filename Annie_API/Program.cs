@@ -23,14 +23,14 @@ var app = builder.Build();
 
 SeedData(app);
 
-async void SeedData(WebApplication app) {
+void SeedData(WebApplication app) {
     var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
 
 
     using (var scope = scopedFactory!.CreateScope())
     {
         var service = scope.ServiceProvider.GetService<SeedData>();
-        await service!.SeedAsync();
+        service!.SeedAsync().Wait();
         
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Build.Experimental.BuildCheck;
+using Microsoft.EntityFrameworkCore;
 using System.Composition;
 
 namespace Annie_API.Models
@@ -13,7 +14,7 @@ namespace Annie_API.Models
 
         public async Task SeedAsync()
         {
-            await _context.Database.EnsureCreatedAsync();
+            await _context.Database.MigrateAsync();
             await CheckUsersAsync();
         }
 
