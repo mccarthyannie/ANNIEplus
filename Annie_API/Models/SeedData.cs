@@ -1,0 +1,30 @@
+﻿using Microsoft.Build.Experimental.BuildCheck;
+using System.Composition;
+
+namespace Annie_API.Models
+{
+    public class SeedData
+    {
+        private readonly DataContext _context;
+        public SeedData(DataContext context)
+        {
+            _context = context;
+        }
+
+        public async Task SeedAsync()
+        {
+            await _context.Database.EnsureCreatedAsync();
+            await CheckUsersAsync();
+        }
+
+        private async Task CheckUsersAsync()
+        {
+            if (!_context.Users.Any())
+            {
+                _context.Users.Add(new User { Id = 1, Password = "admin", Role = UserRole.Admin });
+
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+}

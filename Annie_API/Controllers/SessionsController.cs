@@ -16,10 +16,10 @@ namespace Annie_API.Controllers
     [ApiController]
     public class SessionsController : ControllerBase
     {
-        private readonly SessionContext _context;
+        private readonly DataContext _context;
 
-        // Dependency injection of the SessionContext to interact with the database
-        public SessionsController(SessionContext context)
+        // Dependency injection of the DataContext to interact with the database
+        public SessionsController(DataContext context)
         {
             _context = context;
         }
@@ -70,7 +70,7 @@ namespace Annie_API.Controllers
         // PUT: api/Sessions/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        [Authorize]
+        //[Authorize(Roles="Admin,Instructor")]
         public async Task<IActionResult> PutSession(long id, Session session)
         {
             if (id != session.Id)
@@ -102,7 +102,7 @@ namespace Annie_API.Controllers
         // POST: api/Sessions
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        [Authorize]
+        //[Authorize(Roles="Admin,Instructor")]
         public async Task<ActionResult<Session>> PostSession(Session session)
         {
             _context.Sessions.Add(session);
@@ -113,7 +113,7 @@ namespace Annie_API.Controllers
 
         // DELETE: api/Sessions/5
         [HttpDelete("{id}")]
-        [Authorize]
+        //[Authorize(Roles="Admin,Instructor")]
         public async Task<IActionResult> DeleteSession(long id)
         {
             var session = await _context.Sessions.FindAsync(id);

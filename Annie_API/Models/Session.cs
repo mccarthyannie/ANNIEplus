@@ -17,4 +17,5 @@ public class Session
     public SessionStatus Status { get; set; } = SessionStatus.Available;
     public required List<string> Instructors { get; set; }
     public string? Location { get; set; }
+    public string? Filter { get; set; }
 }

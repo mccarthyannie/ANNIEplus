@@ -1,13 +1,29 @@
 services:
   database: 
     image: postgres:18.2-alpine3.22
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     container_name: annie_db
     ports:
       - "5432:5432"
     volumes:
       - annie_db:/var/lib/postgresql/data
     env_file: 
-      - ./AnnieDB/.env
+      - .env
 
+  api:
+      depends_on:
+        database:
+          condition: service_healthy
+      build: ./Annie_API/.
+      ports:
+        - "5000:8080"
+      env_file:
+        - .env
+      environment:
+        - ConnectionStrings__DefaultConnection=Host=database;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
 volumes:
   annie_db:
