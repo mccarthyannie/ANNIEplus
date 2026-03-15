@@ -6,7 +6,7 @@
 
 <h3>Create Session</h3>
 
-<EditForm Model="@session" OnValidSubmit="@HandleSubmit" FormName="SessionForm">
+<EditForm Model="@session" OnValidSubmit="@HandleSubmit" FormName="Session">
     <DataAnnotationsValidator />
     <ValidationSummary />
    
@@ -14,7 +14,7 @@
     <div class="form-group mb-3">
         <label>Session Name:</label>
         <InputText @bind-Value="session.Name" class="form-control" />
-        <ValidationMessage For="@(() => Session.Name)" />
+        <ValidationMessage For="@(() => session.Name)" />
     </div>
 
     // select instructor from list of instructors in the database
@@ -82,7 +82,7 @@
 
 @code {
     [SupplyParameterFromForm]
-    private Session sessionForm { get; set; } = new() 
+    private Session session { get; set; } = new() 
     {
         StartTime = DateTime.Today.AddHours(9),,
         EndTime = DateTime.Today.AddHours(10),
@@ -96,12 +96,12 @@
 
     private async Task HandleSubmit()
     {
-        sessionForm.EndTime = new DateTime(
-            sessionForm.StartTime.Year, sessionForm.StartTime.Month, sessionForm.StartTime.Day, 
-            sessionForm.EndTime.Hour, sessionForm.EndTime.Minute, 0
+        session.EndTime = new DateTime(
+            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, 
+            session.EndTime.Hour, session.EndTime.Minute, 0
         );
 
-        if (sessionForm.EndTime <= sessionForm.StartTime)
+        if (session.EndTime <= session.StartTime)
         {
             errorMessage = "Error: The session cannot end before it starts!";
             submitted = false;
@@ -110,14 +110,14 @@
 
         try 
         {
-            var response = await Http.PostAsJsonAsync("api/Sessions", sessionForm);
+            var response = await Http.PostAsJsonAsync("api/Sessions", session);
             if (response.IsSuccessStatusCode)
             {
-                lastCreatedName = sessionForm.Name;
+                lastCreatedName = session.Name;
                 submitted = true;
                 errorMessage = null;
 
-                sessionForm = new Session {
+                session = new Session {
                     StartTime = DateTime.Today.AddHours(9),
                     EndTime = DateTime.Today.AddHours(10),
                     Instructors = new List<string>(),

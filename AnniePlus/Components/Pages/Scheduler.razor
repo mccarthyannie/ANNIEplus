@@ -2,7 +2,7 @@
 @using Annie_API.Models
 @inject HttpClient Http
 
-<RadzenSchedulerData="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
+<RadzenScheduler Data="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
     <RadzenMonthView />
     <RadzenWeekView />
 </RadzenScheduler>
