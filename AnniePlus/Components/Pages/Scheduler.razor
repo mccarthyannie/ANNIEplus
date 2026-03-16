@@ -8,14 +8,16 @@
 {
     <div class="alert alert-danger">@errorMessage</div>
 }
-else if (sessions == null) 
+else if (sessions == null)
 {
     <p><em>Loading schedule...</em></p>
 }
 else
 {
-    <RadzenScheduler Data="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
+    <RadzenScheduler Data="@sessions" TItem="Session" 
+                     StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
         <RadzenMonthView />
+    </RadzenScheduler>
 }
 
 @code {
