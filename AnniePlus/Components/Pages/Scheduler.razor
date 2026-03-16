@@ -21,23 +21,38 @@ else
 }
 
 @code {
-    private List<Session> sessions = new();
+    private List<Session>? sessions;
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
-{
-    try 
     {
-        sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
-    }
-    catch 
-    {
-        // If the API fails, fill the calendar with "Mock" data
-        sessions = new List<Session>
+        try 
         {
-            new Session { Name = "Yoga Basics", StartTime = DateTime.Today.AddHours(9), EndTime = DateTime.Today.AddHours(10) },
-            new Session { Name = "Advanced Flow", StartTime = DateTime.Today.AddDays(1).AddHours(11), EndTime = DateTime.Today.AddDays(1).AddHours(12) }
-        };
-        errorMessage = "Note: Showing sample data (API disconnected).";
+            sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+        }
+        catch (Exception)
+        {
+            // Providing values for required members to fix CS9035
+            sessions = new List<Session>
+            {
+                new Session 
+                { 
+                    Name = "Yoga Basics", 
+                    StartTime = DateTime.Today.AddHours(9), 
+                    EndTime = DateTime.Today.AddHours(10),
+                    Capacity = 20,
+                    Instructors = new List<string> { "Annie" }
+                },
+                new Session 
+                { 
+                    Name = "Advanced Flow", 
+                    StartTime = DateTime.Today.AddDays(1).AddHours(11), 
+                    EndTime = DateTime.Today.AddDays(1).AddHours(12),
+                    Capacity = 15,
+                    Instructors = new List<string> { "Agustin" }
+                }
+            };
+            errorMessage = "Note: Showing sample data (API disconnected).";
+        }
     }
 }
