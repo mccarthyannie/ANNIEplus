@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Cryptography;
+using Annie_API.Authorization;
+using Annie_API.DTOs;
 
 namespace Annie_API.Controllers
 {
@@ -16,6 +19,7 @@ namespace Annie_API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly DataContext _context;
+        private readonly Authorizator _authorizator = new Authorizator();
 
         public UsersController(DataContext context)
         {
@@ -24,14 +28,21 @@ namespace Annie_API.Controllers
 
         // GET: api/Users
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
-            return await _context.Users.ToListAsync();
+            return await _context.Users
+                .Select(u => new UserDTO
+            {
+                Id = u.Id,
+                Name = u.Name,
+                Email = u.Email,
+                Role = u.Role
+            }).ToListAsync();
         }
 
         // GET: api/Users/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<User>> GetUser(string id)
+        public async Task<ActionResult<UserDTO>> GetUser(string id)
         {
             var user = await _context.Users.FindAsync(id);
 
@@ -40,7 +51,13 @@ namespace Annie_API.Controllers
                 return NotFound();
             }
 
-            return user;
+            return new UserDTO
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
+            };
         }
 
         // PUT: api/Users/5
@@ -79,6 +96,8 @@ namespace Annie_API.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
+            user.Password = _authorizator.HashPassword(user.Password);
+
             _context.Users.Add(user);
             try
             {
