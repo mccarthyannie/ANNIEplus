@@ -5,7 +5,7 @@ namespace Annie_API.Models;
 
 public class User
 {
-	public required string Id { get; set; }
+	public required long Id { get; set; }
 	public string Name { get; set; } = "DefaultUser";
 	public string Email { get; set; } = string.Empty;
 	public required string Password { get; set; }

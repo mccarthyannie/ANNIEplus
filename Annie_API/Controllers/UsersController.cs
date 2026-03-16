@@ -12,12 +12,12 @@ namespace Annie_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
+    //[Authorize]
     public class UsersController : ControllerBase
     {
-        private readonly UserContext _context;
+        private readonly DataContext _context;
 
-        public UsersController(UserContext context)
+        public UsersController(DataContext context)
         {
             _context = context;
         }
@@ -46,7 +46,7 @@ namespace Annie_API.Controllers
         // PUT: api/Users/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        public async Task<IActionResult> PutUser(long id, User user)
         {
             if (id != user.Id)
             {
@@ -115,7 +115,7 @@ namespace Annie_API.Controllers
             return NoContent();
         }
 
-        private bool UserExists(string id)
+        private bool UserExists(long id)
         {
             return _context.Users.Any(e => e.Id == id);
         }
