@@ -2,20 +2,37 @@
 @using Annie_API.Models
 @inject HttpClient Http
 
-<RadzenScheduler Data="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
-    <RadzenMonthView />
-    <RadzenWeekView />
-</RadzenScheduler>
+<h3>Class Schedule</h3>
+
+@if (errorMessage != null)
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+else if (sessions == null) 
+{
+    <p><em>Loading schedule...</em></p>
+}
+else
+{
+    <RadzenScheduler Data="@sessions" TItem="Session" StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
+        <RadzenMonthView />
+}
 
 @code {
     private List<Session> sessions = new();
+    private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        var result = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
-        if (result != null)
+        try
         {
-            sessions = result;
+            sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading schedule: {ex.Message}";
+            sessions = new List<Session>();
+        
         }
     }
 }
