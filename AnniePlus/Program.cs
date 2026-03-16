@@ -1,17 +1,18 @@
 using AnniePlus.Components;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
-using Radzen;
+using Syncfusion.Blazor;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddRadzenComponents();
 builder.Services.AddScoped(sp => new HttpClient
 {
     BaseAddress = new Uri("https://localhost:5013/")
 });
+Syncfusion.Licensing.SyncfusionLicenseProvider.RegisterLicense("Ngo9BigBOggjHTQxAR8/V1JHaF5cWWdCf1FpRmJGdld5fUVHYVZUTXxaS00DNHVRdkdlWXxfdnVURWJfVkN1XEJWYEo=");
+builder.Services.AddSyncfusionBlazor();
 
 // Enable static web assets when running from source (development).
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);

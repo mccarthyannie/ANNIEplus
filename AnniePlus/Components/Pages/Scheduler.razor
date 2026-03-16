@@ -1,58 +1,57 @@
 @page "/scheduler"
 @using Annie_API.Models
 @inject HttpClient Http
+@using Syncfusion.Blazor.Schedule
+@inject SessionService SessionService
 
-<h3>Class Schedule</h3>
+<h3>Schedule</h3>
 
-@if (errorMessage != null)
-{
-    <div class="alert alert-danger">@errorMessage</div>
-}
-else if (sessions == null)
-{
-    <p><em>Loading schedule...</em></p>
-}
-else
-{
-    <RadzenScheduler Data="@sessions" TItem="Session" 
-                     StartProperty="StartTime" EndProperty="EndTime" TextProperty="Name">
-        <RadzenMonthView />
-    </RadzenScheduler>
-}
+<SfScheduler TValue="Session" Height="650px" SelectedDate="@DateTime.Today" DataSource="@Sessions">
+    <SchedulerViews>
+        <SchedulerView Option="View.Week"></SchedulerView>
+        <SchedulerView Option="View.Month"></SchedulerView>
+    </SchedulerViews>
+    <SchedulerEventSettings TEvent="Session" Id="Id" Subject="Name" StartTime="StartTime" EndTime="EndTime" Location="Location"></SchedulerEventSettings>
+</SfScheduler>
 
 @code {
-    private List<Session>? sessions;
-    private string? errorMessage;
-
-    protected override async Task OnInitializedAsync()
+private List<Session> FakeSessions = new()
     {
-        try 
+        new Session
         {
-            sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
-        }
-        catch (Exception)
+            Id = 1,
+            Name = "Yoga Class",
+            Description = "Beginner-friendly yoga session",
+            StartTime = DateTime.Today.AddHours(9),
+            EndTime = DateTime.Today.AddHours(10),
+            Capacity = 20,
+            Instructors = new List<string> { "Annie" },
+            Location = "Studio A",
+            Status = SessionStatus.Available
+        },
+        new Session
         {
-            // Providing values for required members to fix CS9035
-            sessions = new List<Session>
-            {
-                new Session 
-                { 
-                    Name = "Yoga Basics", 
-                    StartTime = DateTime.Today.AddHours(9), 
-                    EndTime = DateTime.Today.AddHours(10),
-                    Capacity = 20,
-                    Instructors = new List<string> { "Annie" }
-                },
-                new Session 
-                { 
-                    Name = "Advanced Flow", 
-                    StartTime = DateTime.Today.AddDays(1).AddHours(11), 
-                    EndTime = DateTime.Today.AddDays(1).AddHours(12),
-                    Capacity = 15,
-                    Instructors = new List<string> { "Agustin" }
-                }
-            };
-            errorMessage = "Note: Showing sample data (API disconnected).";
+            Id = 2,
+            Name = "Meditation",
+            Description = "Mindfulness meditation session",
+            StartTime = DateTime.Today.AddHours(11),
+            EndTime = DateTime.Today.AddHours(12),
+            Capacity = 15,
+            Instructors = new List<string> { "Agustin" },
+            Location = "Studio B",
+            Status = SessionStatus.Available
+        },
+        new Session
+        {
+            Id = 3,
+            Name = "Pilates",
+            Description = "Intermediate pilates class",
+            StartTime = DateTime.Today.AddDays(1).AddHours(14),
+            EndTime = DateTime.Today.AddDays(1).AddHours(15),
+            Capacity = 18,
+            Instructors = new List<string> { "Annie", "Agustin" },
+            Location = "Studio C",
+            Status = SessionStatus.Available
         }
-    }
+    };
 }
