@@ -22,7 +22,7 @@
     @*select instructor from list of instructors in the database*@
     <div class="form-group mb-3">
     <label>Instructors (comma separated):</label>
-    <input class="form-control" @onchange="HandleInstructorChange" placeholder="Annie, Agustin" />
+    <input class="form-control" @oninput="HandleInstructorChange" />
     </div>
 
     @*select location from list of locations in the database*@
@@ -88,6 +88,7 @@
     private DateTime dateOnly = DateTime.Today;
     private DateTime startTimeOnly = DateTime.Today.AddHours(9);
     private DateTime endTimeOnly = DateTime.Today.AddHours(10);
+    private string instructorInput = "";
     
     [SupplyParameterFromForm]
     private Session session { get; set; } = new() 
@@ -113,10 +114,14 @@
 
     private async Task HandleSubmit()
     {
-        if (session.Instructors == null || !session.Instructors.Any())
-        {
+        session.Instructors = instructorInput
+            .Split(',')
+            .Select(s => s.Trim())
+            .Where(s => !string.IsNullOrEmpty(s))
+            .ToList();
+
+        if (!session.Instructors.Any())
             session.Instructors = new List<string> { "TBD" };
-        }
 
         session.EndTime = new DateTime(
             dateOnly.Year, dateOnly.Month, dateOnly.Day, 
