@@ -4,9 +4,11 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 
+<PageTitle>Create Session</PageTitle>
+
 <h3>Create Session</h3>
 
-<EditForm Model="@session" OnValidSubmit="@HandleSubmit" FormName="Session">
+<EditForm Model="session" OnValidSubmit="@HandleSubmit" FormName="Session">
     <DataAnnotationsValidator />
     <ValidationSummary />
    
@@ -21,7 +23,7 @@
     <div class="form-group mb-3">
     <label>Instructors (comma separated):</label>
     <input class="form-control" @onchange="HandleInstructorChange" placeholder="Annie, Agustin" />
-    </div>>
+    </div>
 
     @*select location from list of locations in the database*@
     <div class="form-group mb-3">
@@ -64,23 +66,33 @@
         </div>
     </div>
      
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
     <button type="submit" class="btn btn-primary">Create Session</button>
 
 </EditForm>
 
 @if (submitted)
 {
-    <div class"alert alert-success mt-3">
+    <div class="alert alert-success mt-3">
         <p>Your session "@session.Name" has been made.</p>
     </div>
 }
 
 @code {
     [SupplyParameterFromForm]
+    private DateTime dateOnly = DateTime.Today;
+    private DateTime startTimeOnly = DateTime.Today.AddHours(9);
+    private DateTime endTimeOnly = DateTime.Today.AddHours(10);
     private Session session { get; set; } = new() 
     {
-        StartTime = DateTime.Today.AddHours(9),
-        EndTime = DateTime.Today.AddHours(10),
+        StartTime = startTimeOnly,
+        EndTime = endTimeOnly,
         Instructors = new List<string>(),
         Capacity = 45,
         Status = SessionStatus.Available,
@@ -106,8 +118,8 @@
         }
 
         session.EndTime = new DateTime(
-            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, 
-            session.EndTime.Hour, session.EndTime.Minute, 0
+            dateOnly.year, dateOnly.Month, dateOnly.Day, 
+            startTimeOnly.Hour, startTimeOnly.Minute, 0
         );
 
         if (session.EndTime <= session.StartTime)
