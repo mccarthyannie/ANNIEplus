@@ -8,5 +8,6 @@ namespace Annie_API.Models
 
         public DbSet<User> Users { get; set; } = null!;
         public DbSet<Session> Sessions { get; set; } = null!;
+        public DbSet<Booking> Bookings { get; set; } = null!;
     }
 }

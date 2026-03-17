@@ -35,8 +35,8 @@ Content-Type: application/json
 POST {{Annie_API_HostAddress}}/api/Users
 Content-Type: application/json
 {
-  "id": "100",
-  "name": "Test User",
-  "email": "aeeguiguren@mun.ca",
-  "password": "abcd1234"
+  "id": "2",
+  "name": "Annie",
+  "email": "baba",
+  "password": "bobo"
 }

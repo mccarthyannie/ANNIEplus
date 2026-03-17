@@ -1,13 +1,21 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.AspNetCore.Identity;
 
 namespace Annie_API.Models;
 
 public class User
 {
-	public required long Id { get; set; }
+	[Key]
+	[DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+	[Required]
+
+	public long Id { get; set; }
 	public string Name { get; set; } = "DefaultUser";
+	[Required]
 	public string Email { get; set; } = string.Empty;
-	public required string Password { get; set; }
-	public UserRole Role { get; set; } = UserRole.User;
+	[Required]
+	public string Password { get; set; } = string.Empty;
+    public UserRole Role { get; set; } = UserRole.User;
 }

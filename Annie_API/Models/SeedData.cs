@@ -22,7 +22,7 @@ namespace Annie_API.Models
         {
             if (!_context.Users.Any())
             {
-                _context.Users.Add(new User { Id = 1, Password = "admin", Role = UserRole.Admin });
+                _context.Users.Add(new User { Id = 1, Password = "admin", Email = "agustin.egui@gmail.com", Role = UserRole.Admin });
 
                 await _context.SaveChangesAsync();
             }
