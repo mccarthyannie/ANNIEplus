@@ -21,16 +21,16 @@ builder.Services.AddTransient<SeedData>();
 
 var app = builder.Build();
 
-SeedData(app);
+await SeedDb(app);
 
-void SeedData(WebApplication app) {
+async Task SeedDb(WebApplication app) {
     var scopedFactory = app.Services.GetService<IServiceScopeFactory>();
 
 
     using (var scope = scopedFactory!.CreateScope())
     {
         var service = scope.ServiceProvider.GetService<SeedData>();
-        service!.SeedAsync().Wait();
+        await service.SeedAsync();
         
     }
 }
