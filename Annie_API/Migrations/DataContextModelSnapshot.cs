@@ -23,6 +23,32 @@ namespace Annie_API.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Annie_API.Models.Booking", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("BookingDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long>("SessionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SessionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Bookings");
+                });
+
             modelBuilder.Entity("Annie_API.Models.Session", b =>
                 {
                     b.Property<long>("Id")
@@ -39,12 +65,6 @@ namespace Annie_API.Migrations
 
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Enrolled")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Filter")
-                        .HasColumnType("text");
 
                     b.PrimitiveCollection<List<string>>("Instructors")
                         .IsRequired()
@@ -93,6 +113,25 @@ namespace Annie_API.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("Annie_API.Models.Booking", b =>
+                {
+                    b.HasOne("Annie_API.Models.Session", "Session")
+                        .WithMany()
+                        .HasForeignKey("SessionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Annie_API.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Session");
+
+                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }
