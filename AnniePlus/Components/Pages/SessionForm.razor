@@ -22,7 +22,7 @@
     @*select instructor from list of instructors in the database*@
     <div class="form-group mb-3">
     <label>Instructors (comma separated):</label>
-    <input class="form-control" @oninput="HandleInstructorChange" />
+    <input class="form-control" @bind="instructorInput" @oninput="HandleInstructorChange" />
     </div>
 
     @*select location from list of locations in the database*@
