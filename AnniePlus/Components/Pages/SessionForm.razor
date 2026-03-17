@@ -85,14 +85,15 @@
 }
 
 @code {
-    [SupplyParameterFromForm]
     private DateTime dateOnly = DateTime.Today;
     private DateTime startTimeOnly = DateTime.Today.AddHours(9);
     private DateTime endTimeOnly = DateTime.Today.AddHours(10);
+    
+    [SupplyParameterFromForm]
     private Session session { get; set; } = new() 
     {
-        StartTime = startTimeOnly,
-        EndTime = endTimeOnly,
+        StartTime = DateTime.Today.AddHours(9),
+        EndTime = DateTime.Today.AddHours(10),
         Instructors = new List<string>(),
         Capacity = 45,
         Status = SessionStatus.Available,
@@ -118,8 +119,8 @@
         }
 
         session.EndTime = new DateTime(
-            dateOnly.year, dateOnly.Month, dateOnly.Day, 
-            startTimeOnly.Hour, startTimeOnly.Minute, 0
+            dateOnly.Year, dateOnly.Month, dateOnly.Day, 
+            endTimeOnly.Hour, endTimeOnly.Minute, 0
         );
 
         if (session.EndTime <= session.StartTime)
