@@ -115,7 +115,10 @@ namespace Annie_API.Controllers
                 }
             }
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, user);
+            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO 
+                                                                        { Id = user.Id,
+                                                                          Name = user.Name,
+                                                                          Email = user.Email});
         }
 
         // DELETE: api/Users/5

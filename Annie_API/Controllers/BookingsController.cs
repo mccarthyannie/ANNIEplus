@@ -48,7 +48,7 @@ namespace Annie_API.Controllers
 
         // PUT: api/Bookings/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
+        [HttpPut("{id}")]   
         public async Task<IActionResult> PutBooking(long id, Booking booking)
         {
             if (id != booking.Id)
