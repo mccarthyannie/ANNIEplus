@@ -1,0 +1,46 @@
+<button class="btn btn-login" @onclick="OpenPopup">Book now!</button>
+
+<Popup @bind-Visible="showPopup">
+    <div class="popup-content">
+        <h3>Book Session</h3>
+        <p>You are booking:<strong>@booking.SessionName</strong> at <strong>@booking.StartTime @booking.StartTime.Day</strong></p>
+        <p>Instructor: <strong>@booking.Instructor</strong></p>
+        <p>Location: <strong>@booking.Location</strong></p>
+        <p>Duration: <strong>@booking.EndTime.Subtract(booking.StartTime).TotalMinutes</strong> minutes</p>
+    </div>
+    <div class="popup-actions">
+        <button class="btn btn-secondary" @onclick="ClosePopup">Cancel</button>
+        <button class="btn btn-primary" @onclick="HandleValidSubmit">Confirm Booking</button>
+</Popup>
+
+@code {
+    [Parameter] public int SessionId { get; set; }
+    
+    [Inject] AuthenticationStateProvider AuthProvider { get; set; } = default!;
+
+    private bool showPopup = false;
+    private BookingModel booking = new();
+
+    private async Task OpenPopup()
+    {
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        booking = new BookingModel {
+            SessionId = SessionId,
+            UserId = user.FindFirst(c => c.Type.Contains("nameidentifier"))?.Value ?? "Anonymous",
+            PaymentStatus = "Pending" 
+        };
+
+        showPopup = true;
+    }
+
+    private async Task HandleValidSubmit()
+    {
+        var response = await Http.PostAsJsonAsync("api/bookings", booking);
+        
+        if(response.IsSuccessStatusCode) {
+            showPopup = false;
+        }
+    }
+}
