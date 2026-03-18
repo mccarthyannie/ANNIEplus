@@ -19,11 +19,11 @@
         <ValidationMessage For="@(() => session.Name)" />
     </div>
 
-    @*select instructor from list of instructors in the database*@
+    @*select instructor from list of instructors in the database
     <div class="form-group mb-3">
     <label>Instructors (comma separated):</label>
     <input class="form-control" @bind="instructorInput" @oninput="HandleInstructorChange" />
-    </div>
+    </div>*@
 
     @*select location from list of locations in the database*@
     <div class="form-group mb-3">
@@ -103,25 +103,8 @@
     private bool submitted = false;
     private string? errorMessage;
 
-    private void HandleInstructorChange(ChangeEventArgs e)
-    {
-        var val = e.Value?.ToString();
-        if (!string.IsNullOrWhiteSpace(val))
-        {
-            session.Instructors = val.Split(',').Select(s => s.Trim()).ToList();
-        }
-    }
-
     private async Task HandleSubmit()
     {
-        session.Instructors = instructorInput
-            .Split(',')
-            .Select(s => s.Trim())
-            .Where(s => !string.IsNullOrEmpty(s))
-            .ToList();
-
-        if (!session.Instructors.Any())
-            session.Instructors = new List<string> { "TBD" };
 
         session.EndTime = new DateTime(
             dateOnly.Year, dateOnly.Month, dateOnly.Day, 
