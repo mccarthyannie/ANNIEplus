@@ -1,4 +1,4 @@
-@Annie_API_HostAddress = http://localhost:5000
+@Annie_API_HostAddress = http://localhost:7000
 
 POST {{Annie_API_HostAddress}}/api/sessions
 Content-Type: application/json
@@ -40,3 +40,26 @@ Content-Type: application/json
   "email": "baba",
   "password": "bobo"
 }
+
+###
+
+POST {{Annie_API_HostAddress}}/api/register
+Content-Type: application/json
+
+{
+  "name": "Annie",
+  "email": "bobo",
+  "password": "bobo"
+}
+
+###
+
+POST {{Annie_API_HostAddress}}/api/login
+Content-Type: application/json
+
+{
+  "email": "bobo",
+  "password": "baba"
+}
+
+###
