@@ -50,7 +50,7 @@
     <div class="row mb-3">
         <div class="col-12">
             <label>Session Date:</label>
-            <InputDate Type="InputDateType.Date" @bind-Value="session.StartTime" class="form-control" />
+            <InputDate Type="InputDateType.Date" @bind-Value="session.DateOnly" class="form-control" />
         </div>
     </div>
 
@@ -58,12 +58,12 @@
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Start Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.StartTime" class="form-control" />
+            <InputDate Type="InputDateType.Time" @bind-Value="session.startTimeOnly" class="form-control" />
         </div>
 
         <div class="col-md-6">
             <label class="form-label">End Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.EndTime" class="form-control" />
+            <InputDate Type="InputDateType.Time" @bind-Value="session.endTimeOnly" class="form-control" />
         </div>
     </div>
      
@@ -105,7 +105,10 @@
 
     private async Task HandleSubmit()
     {
-
+        session.StartTime = new DateTime(
+            dateOnly.Year, dateOnly.Month, dateOnly.Day, 
+            startTimeOnly.Hour, startTimeOnly.Minute, 0
+        );
         session.EndTime = new DateTime(
             dateOnly.Year, dateOnly.Month, dateOnly.Day, 
             endTimeOnly.Hour, endTimeOnly.Minute, 0
