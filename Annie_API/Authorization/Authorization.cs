@@ -41,7 +41,7 @@ namespace Annie_API.Authorization
 
             for (int i = 0; i < hashLength; i++)
                 if (hashBytes[i + saltLength] != hash[i])
-                    throw new UnauthorizedAccessException("Password is incorrect");
+                    return false;
 
             return true;
         }
