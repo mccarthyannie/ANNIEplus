@@ -14,6 +14,6 @@ public class Session
     public DateTime EndTime { get; set; } = DateTime.MinValue;
     public required int Capacity { get; set; }
     public SessionStatus Status { get; set; } = SessionStatus.Available;
-    public required List<string> Instructors { get; set; }
+    public required string Instructor { get; set; }
     public string? Location { get; set; }
 }

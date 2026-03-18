@@ -19,11 +19,12 @@
         <ValidationMessage For="@(() => session.Name)" />
     </div>
 
-    @*select instructor from list of instructors in the database
+    @*select instructor from list of instructors in the database*@
     <div class="form-group mb-3">
-    <label>Instructors (comma separated):</label>
-    <input class="form-control" @bind="instructorInput" @oninput="HandleInstructorChange" />
-    </div>*@
+        <label>Instructor:</label>
+        <InputText @bind-Value="session.Instructor" class="form-control" />
+        <ValidationMessage For="@(() => session.Instructor)" />
+    </div>
 
     @*select location from list of locations in the database*@
     <div class="form-group mb-3">
@@ -88,14 +89,13 @@
     private DateTime dateOnly = DateTime.Today;
     private DateTime startTimeOnly = DateTime.Today.AddHours(9);
     private DateTime endTimeOnly = DateTime.Today.AddHours(10);
-    private string instructorInput = "";
     
     [SupplyParameterFromForm]
     private Session session { get; set; } = new() 
     {
         StartTime = DateTime.Today.AddHours(9),
         EndTime = DateTime.Today.AddHours(10),
-        Instructors = new List<string>(),
+        Instructors = "",
         Capacity = 45,
         Status = SessionStatus.Available,
     };
@@ -129,7 +129,7 @@
                 session = new Session {
                     StartTime = DateTime.Today.AddHours(9),
                     EndTime = DateTime.Today.AddHours(10),
-                    Instructors = new List<string>(),
+                    Instructors = "",
                     Capacity = 45,
                     Status = SessionStatus.Available,
                 };
