@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -25,7 +24,7 @@ namespace Annie_API.Migrations
                     EndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Capacity = table.Column<int>(type: "integer", nullable: false),
                     Status = table.Column<int>(type: "integer", nullable: false),
-                    Instructors = table.Column<List<string>>(type: "text[]", nullable: false),
+                    Instructors = table.Column<string>(type: "text", nullable: false),
                     Location = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>

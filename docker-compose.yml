@@ -22,7 +22,7 @@ services:
           condition: service_healthy
       build: ./Annie_API/.
       ports:
-        - "5000:8080"
+        - "7000:8080"
       env_file:
         - .env
       environment:

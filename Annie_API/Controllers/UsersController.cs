@@ -40,6 +40,21 @@ namespace Annie_API.Controllers
             }).ToListAsync();
         }
 
+        // GET: api/Users/Instructors
+        [HttpGet("Instructors")]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInstructors()
+        {
+            return await _context.Users
+                .Where(u => u.Role == UserRole.Instructor)
+                .Select( u => new UserDTO
+                {
+                    Id = u.Id,
+                    Name = u.Name,
+                    Email = u.Email,
+                    Role = u.Role
+                }).ToListAsync();
+        }
+
         // GET: api/Users/5
         [HttpGet("{id}")]
         public async Task<ActionResult<UserDTO>> GetUser(string id)

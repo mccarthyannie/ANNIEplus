@@ -28,35 +28,67 @@ namespace Annie_API.Controllers
             return await _context.Bookings.ToListAsync();
         }
 
+        // Returns the sessions 
         // GET: api/Bookings/User/5
         [HttpGet("User/{id}")]
-        public async Task<ActionResult<IEnumerable<Booking>>> GetBookingByUser(long id)
+        public async Task<ActionResult<List<Session>>> GetBookingByUser(long id)
         {
             var bookings = await _context.Bookings.Where(u => u.UserId == id).ToListAsync();
+            
+            List<Session> sessions = new List<Session>();
 
-            return bookings;
+            foreach (var booking in bookings)
+            {
+                sessions.Add(booking.Session);
+            }
+
+            return sessions;
         }
 
+        // Returns the users that booked the session
         // GET: api/Bookings/Session/5
         [HttpGet("Session/{id}")]
-        public async Task<ActionResult<IEnumerable<Booking>>> GetBookingBySession(long id)
+        public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
             var bookings = await _context.Bookings.Where(u => u.SessionId == id).ToListAsync();
 
-            return bookings;
+            List<UserDTO> users = new List<UserDTO>();
+
+            foreach (var booking in bookings)
+            {
+                users.Add(new UserDTO {
+                    Id = booking.User.Id,
+                    Name = booking.User.Name,
+                    Email = booking.User.Email
+                });
+            }
+
+            return users;
         }
 
         // PUT: api/Bookings/5
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]   
-        public async Task<IActionResult> PutBooking(long id, Booking booking)
+        public async Task<IActionResult> PutBooking(long id, BookingRequest booking)
         {
-            if (id != booking.Id)
+            if (!BookingExists(id))
+            {
+                return NotFound();
+            }
+            if (booking == null || !UserExists(booking.UserId) || !SessionExists(booking.SessionId))
             {
                 return BadRequest();
             }
 
-            _context.Entry(booking).State = EntityState.Modified;
+            var newBooking = new Booking
+            {
+                Id = id,
+                UserId = booking.UserId,
+                SessionId = booking.SessionId,
+                BookingDate = DateTime.UtcNow
+            };
+            
+            _context.Entry(newBooking).State = EntityState.Modified;
 
             try
             {
@@ -96,20 +128,20 @@ namespace Annie_API.Controllers
                 return BadRequest("User and Session must be provided.");
             }
 
+            var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
+            if (count >= session.Capacity) { 
+                return BadRequest("Session is fully booked.");
+            }
+            if (session.StartTime <= DateTime.UtcNow) { 
+                return BadRequest("Session has already started.");
+            }
+
             var booking = new Booking
             {
                 UserId = request.UserId,
                 SessionId = request.SessionId,
                 BookingDate = DateTime.UtcNow
             };
-
-            var count = await _context.Bookings.CountAsync(b => b.SessionId == booking.SessionId);
-            if (count >= booking.Session.Capacity) { 
-                return BadRequest("Session is fully booked.");
-            }
-            if (booking.Session.StartTime <= DateTime.UtcNow) { 
-                return BadRequest("Session has already started.");
-            }
 
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
@@ -133,6 +165,14 @@ namespace Annie_API.Controllers
             return NoContent();
         }
 
+        private bool UserExists(long id)
+        {
+            return _context.Users.Any(e => e.Id == id);
+        }
+        private bool SessionExists(long id)
+        {
+            return _context.Sessions.Any(e => e.Id == id);
+        }
         private bool BookingExists(long id)
         {
             return _context.Bookings.Any(e => e.Id == id);
