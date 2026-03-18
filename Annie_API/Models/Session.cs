@@ -15,6 +15,6 @@ public class Session
     public required int Capacity { get; set; }
     public int Enrolled { get; set; } = 0;
     public SessionStatus Status { get; set; } = SessionStatus.Available;
-    public required List<string> Instructors { get; set; }
+    public required string Instructor { get; set; }
     public string? Location { get; set; }
 }
