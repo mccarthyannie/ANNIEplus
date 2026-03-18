@@ -1,37 +1,6 @@
 @Annie_API_HostAddress = http://localhost:7000
 
-POST {{Annie_API_HostAddress}}/api/sessions
-Content-Type: application/json
-
-{
-  "name": "Test Session",
-  "starttime": "2024-06-01T10:00:00Z",
-  "capacity": 10,
-  "instructors": ["Me"]
-}
-
-###
-
-GET {{Annie_API_HostAddress}}/api/sessions
-
-###
-
-@id=1
-GET {{Annie_API_HostAddress}}/api/sessions/{{id}}
-
-###
-
-POST {{Annie_API_HostAddress}}/api/sessions
-Content-Type: application/json
-
-{
-  "name": "Test Session2",
-  "starttime": "2024-06-01T10:00:00Z",
-  "capacity": 20,
-  "instructors": ["You"]
-}
-
-###
+// USER REQUESTS
 POST {{Annie_API_HostAddress}}/api/Users
 Content-Type: application/json
 {
@@ -48,7 +17,7 @@ Content-Type: application/json
 
 {
   "name": "Annie",
-  "email": "bobo",
+  "email": "agibahjks",
   "password": "bobo"
 }
 
@@ -60,6 +29,28 @@ Content-Type: application/json
 {
   "email": "bobo",
   "password": "baba"
+}
+
+###
+// SESSION REQUESTS
+POST {{Annie_API_HostAddress}}/api/sessions
+Content-Type: application/json
+
+{
+  "name": "Test Session2",
+  "starttime": "2026-06-01T10:00:00Z",
+  "capacity": 20,
+  "instructors": "You"
+}
+###
+
+// BOOKING REQUESTS
+POST {{Annie_API_HostAddress}}/api/bookings
+Content-Type: application/json
+
+{
+  "userId": "2",
+  "sessionId": "2"
 }
 
 ###
