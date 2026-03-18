@@ -13,8 +13,7 @@ public class Session
     public required DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; } = DateTime.MinValue;
     public required int Capacity { get; set; }
-    public int Enrolled { get; set; } = 0;
     public SessionStatus Status { get; set; } = SessionStatus.Available;
-    public required string Instructor { get; set; }
+    public required string Instructors { get; set; } = "Default Instructor";
     public string? Location { get; set; }
 }
