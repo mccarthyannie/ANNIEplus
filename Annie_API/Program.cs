@@ -1,6 +1,7 @@
-AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
+
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
 var builder = WebApplication.CreateBuilder(args);
 
