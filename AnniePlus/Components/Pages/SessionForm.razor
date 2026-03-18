@@ -105,14 +105,13 @@
 
     private async Task HandleSubmit()
     {
-        session.StartTime = new DateTime(
-            dateOnly.Year, dateOnly.Month, dateOnly.Day, 
-            startTimeOnly.Hour, startTimeOnly.Minute, 0
-        );
-        session.EndTime = new DateTime(
-            dateOnly.Year, dateOnly.Month, dateOnly.Day, 
-            endTimeOnly.Hour, endTimeOnly.Minute, 0
-        );
+        var start = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, 
+                             startTimeOnly.Hour, startTimeOnly.Minute, 0);
+        var end = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, 
+                           endTimeOnly.Hour, endTimeOnly.Minute, 0);
+
+        session.StartTime = DateTime.SpecifyKind(start, DateTimeKind.Utc);
+        session.EndTime = DateTime.SpecifyKind(end, DateTimeKind.Utc);
 
         if (session.EndTime <= session.StartTime)
         {
