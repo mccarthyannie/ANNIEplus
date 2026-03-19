@@ -1,0 +1,39 @@
+.class {
+    display: flex;
+    align-content: center;
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+    background: white;
+    transition: background 0.2s;
+}
+
+    .class:hover {
+        background: #f9f9f9;
+    }
+
+    .slot {
+        flex: 0 0 100px;
+        display: flex;
+        flex-direction: column;
+    }
+
+.start-time {
+    font-weight: 700;
+    font-size: 1.2em;
+    color: #333;
+}
+
+.class-name {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin: 0;
+}
+
+.book-button {
+    background-color: aqua;
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    font-weight: bold;
+    cursor: pointer;
+}
