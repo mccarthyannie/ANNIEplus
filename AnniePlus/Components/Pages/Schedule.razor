@@ -11,7 +11,6 @@
     {
         var date = DateTime.Today.AddDays(i);
         <h3 class="date-header">@date.ToString("ddd, MMM, d")</h3>
-        <p class="no-classes)
         @foreach (var day in GroupedSessions)
         {
             <h3 class="date-header">@day.Key.ToString("ddd, MMM, d")</h3>
