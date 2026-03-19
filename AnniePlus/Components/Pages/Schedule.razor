@@ -1,0 +1,35 @@
+@page "/schedule"
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<div class="scheduler">
+    <h2 class="mb-4">Class Schedule</h2>"
+
+    @foreach (var day in GroupedSessions)
+    {
+        <h3 class="date-header">@day.Key.ToString("ddd, MMM, d")</h3>
+
+        @foreach (var session in day)
+        {
+            <div class="class">
+                <div class="slot">
+                    <span class="start-time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</span>
+                    <span class="duration">@CalculateDuration(session) min</span>       
+                </div>
+
+                <div class="info">
+                    <h4 class="class-name">@session.Name</h4>
+                    <p class="instructor">Instructor: @session.Instructor</p>
+                    <p class="location"><i class="bi bi-geo-alt"></i> @session.Location</p>
+                </div>
+
+                <div class="actions">
+                    <span class="capacity">[booked amount]/@session.Capacity spots available</span>
+                    <button class="book-button">Book</button>
+                </div>
+            </div>
+        }
+    }
+</div>
