@@ -1,6 +1,6 @@
 .scheduler-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); /* Forces exactly 7 columns */
+    grid-template-columns: repeat(7, 1fr); 
     gap: 0;
     border-top: 1px solid #eee;
     background: #fff;
@@ -41,9 +41,9 @@
 
 .session-card {
     border: 1px solid #e0e0e0;
-    padding: 12px;
+    padding-top: 8px;
+    padding-bottom: 2px;
     background: white;
-    transition: 0.2s;
 }
 
     .session-card:hover {
@@ -69,7 +69,7 @@
 
 .book-btn {
     width: 100%;
-    background: #000;
+    background: aqua;
     color: #fff;
     border: none;
     margin-top: 10px;
