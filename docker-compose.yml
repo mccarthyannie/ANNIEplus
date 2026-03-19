@@ -27,6 +27,8 @@ services:
         - .env
       environment:
         - ConnectionStrings__DefaultConnection=Host=database;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
+        - ASPNETCORE_URLS=http://+:8080
+        - ASPNETCORE_HTTPS_PORT=0
 volumes:
   annie_vol:
     external: false

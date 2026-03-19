@@ -1,0 +1,192 @@
+@page "/schedule"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@using System.Security.Claims
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+
+<PageTitle>Schedule</PageTitle>
+
+<div class="schedule-nav d-flex align-items-center justify-content-between p-3">
+    <button class="btn" @onclick="GoToPreviousWeek">
+        <i class="bi bi-chevron-left"></i> +
+    </button>
+    
+    <h2 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h2>
+    
+    <button class="btn" @onclick="GoToNextWeek">
+        - <i class="bi bi-chevron-right"></i>
+    </button>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4>Weekly Schedule</h4>
+    <NavLink class="nav-link" href="create-session">
+                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
+     </NavLink>
+</div>
+
+<div class="scheduler-grid">
+    @for (int i = 0; i < 7; i++)
+    {
+        var targetDate = currentStartDate.AddDays(i);
+        var daySessions = sessions
+            .Where(s => s.StartTime.ToLocalTime().Date == targetDate.Date)
+            .OrderBy(s => s.StartTime)
+            .ToList();
+
+        <div class="day-column">
+            <div class="day-header">
+                <span class="day-name">@targetDate.ToString("ddd")</span>
+                <span class="day-date">@targetDate.ToString("MMM d")</span>
+            </div>
+
+            <div class="sessions-list">
+                @if (!daySessions.Any())
+                {
+                    <div class="no-classes">No Classes</div>
+                }
+                else
+                {
+                    @foreach (var session in daySessions)
+                    {
+                        <div class="session-card">
+                            <div class="name">@session.Name</div>
+                            <div class="time">@session.StartTime.ToLocalTime().ToString("h:mm tt") @Duration(session) min</div>
+                            <div class="instructor">@session.Instructor</div>
+                            
+                            <div class="meta">
+                                <span>@session.Capacity spots available</span>
+                            </div>
+                            
+                            <button class="book-btn" @onclick="() => OpenPopup(session)">Book</button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    }
+    <Popup @bind-Visible="showPopup">
+    <div class="popup-content" style="text-align: center; padding: 10px;">
+        <h3 style="text-transform: uppercase; margin-bottom: 20px;">Confirm Booking</h3>
+        
+        @if (selectedSession != null)
+        {
+            <div style="margin-bottom: 20px; line-height: 1.6;">
+                <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
+                <p>@selectedSession.StartTime.ToLocalTime().ToString("dddd, MMM d")</p>
+                <p><strong>@selectedSession.StartTime.ToLocalTime().ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                <p class="text-muted">Instructor: @selectedSession.Instructor</p>
+            </div>
+        }
+
+        <div style="display: flex; gap: 10px; margin-top: 25px;">
+            <button class="btn btn-dark w-100" @onclick="HandleBooking">
+                Confirm Booking
+            </button>
+        </div>
+    </div>
+</Popup>
+</div>
+
+@code 
+{
+    private Booking booking = new();
+    private DateTime currentStartDate = DateTime.Today;
+    private bool showPopup = false;
+    private bool submitted = false;
+    private Session? selectedSession;
+    private string? errorMessage;
+    private List<Session> sessions = new();
+
+    private async Task GoToNextWeek()
+    {
+        currentStartDate = currentStartDate.AddDays(7);
+        await LoadSessions();
+    }
+
+    private async Task GoToPreviousWeek()
+    {
+        currentStartDate = currentStartDate.AddDays(-7);
+        await LoadSessions();
+    }
+
+    private async Task OpenPopup(Session session)
+    {
+        selectedSession = session;
+
+        showPopup = true;
+    }
+    private void ClosePopup() => showPopup = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSessions();
+    }
+
+    private async Task LoadSessions()
+    {
+        try 
+        {
+            var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
+            
+            var result = await Http.GetFromJsonAsync<List<Session>>(url);
+            sessions = result ?? new List<Session>();
+            
+            StateHasChanged(); 
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading sessions: {ex.Message}");
+        }
+    }
+
+    private string Duration(Session s) => 
+        (s.EndTime - s.StartTime).TotalMinutes.ToString();
+
+    private async Task HandleBooking()
+    {
+        if (selectedSession == null) return;
+
+        try 
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userIdString = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                errorMessage = "You must be logged in to book.";
+                StateHasChanged();
+                return;
+            }
+
+            var request = new 
+            { 
+                UserId = long.Parse(userIdString),
+                SessionId = selectedSession.Id
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Bookings", booking);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                showPopup = false;
+                errorMessage = null;
+                await LoadSessions();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+}

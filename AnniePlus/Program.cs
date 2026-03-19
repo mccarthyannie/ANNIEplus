@@ -6,6 +6,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+builder.Services.AddScoped(sp => new HttpClient
+{
+    BaseAddress = new Uri("http://localhost:7000/")
+});
 
 // Enable static web assets when running from source (development).
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
@@ -20,7 +24,7 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+//app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 

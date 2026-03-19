@@ -1,0 +1,159 @@
+@page "/create-session"
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Create Session</PageTitle>
+
+<h3>Create Session</h3>
+
+<EditForm Model="session" OnValidSubmit="@HandleSubmit" FormName="Session">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+   
+    @*input for session name*@
+    <div class="form-group mb-3">
+        <label>Session Name:</label>
+        <InputText @bind-Value="session.Name" class="form-control" />
+        <ValidationMessage For="@(() => session.Name)" />
+    </div>
+
+    @*select instructor from list of instructors in the database*@
+    <div class="form-group mb-3">
+        <label>Instructor:</label>
+        <InputText @bind-Value="session.Instructor" class="form-control" />
+        <ValidationMessage For="@(() => session.Instructor)" />
+    </div>
+
+    @*select location from list of locations in the database*@
+    <div class="form-group mb-3">
+        <label>Location:</label>
+        <InputText @bind-Value="session.Location" class="form-control" />
+    </div>
+
+    @*input for session capacity*@
+    <div class="form-group mb-3">
+    <label>Class Capacity:</label>
+    <InputNumber @bind-Value="session.Capacity" class="form-control" />
+    <ValidationMessage For="@(() => session.Capacity)" />
+    </div>
+    
+    @*input for session description*@
+    <div class="form-group mb-3">
+        <label>Session Description:</label>
+        <InputTextArea @bind-Value="session.Description" class="form-control" rows="3"/>
+        <ValidationMessage For="@(() => session.Description)" />
+    </div>
+
+    @*select the date*@
+    <div class="row mb-3">
+        <div class="col-12">
+            <label>Session Date:</label>
+            <InputDate Type="InputDateType.Date" @bind-Value="session.StartTime" class="form-control" />
+        </div>
+    </div>
+
+    @*select the start and end time*@
+    <div class="row mb-3">
+        <div class="col-md-6">
+            <label class="form-label">Start Time:</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="session.StartTime" class="form-control" />
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">End Time:</label>
+            <InputDate Type="InputDateType.Time" @bind-Value="session.EndTime" class="form-control" />
+        </div>
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Create Session</button>
+
+</EditForm>
+
+@if (submitted)
+{
+    <div class="alert alert-success mt-3">
+        <p>Your session has been made.</p>
+    </div>
+}
+
+@code {
+    
+    [SupplyParameterFromForm]
+    private Session session { get; set; } = new Session 
+    { 
+        StartTime = DateTime.Today.AddHours(9), 
+        EndTime = DateTime.Today.AddHours(10),
+        Instructor = "", 
+        Capacity = 0,
+        Status = SessionStatus.Available,
+    };
+    
+    protected override void OnInitialized()
+    {
+        session.StartTime = DateTime.Today.AddHours(9);
+        session.EndTime = DateTime.Today.AddHours(10);
+        session.Instructor = "";
+        session.Capacity = 0;
+        session.Status = SessionStatus.Available;
+    }
+
+    private bool submitted = false;
+    private string? errorMessage;
+
+    private async Task HandleSubmit()
+    {
+
+    var finalStart = new DateTime(
+            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day,
+            session.StartTime.Hour, session.StartTime.Minute, 0);
+
+        var finalEnd = new DateTime(
+            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, // Use StartDate for EndDate
+            session.EndTime.Hour, session.EndTime.Minute, 0);
+
+        session.StartTime = DateTime.SpecifyKind(finalStart, DateTimeKind.Utc);
+        session.EndTime = DateTime.SpecifyKind(finalEnd, DateTimeKind.Utc);
+
+        if (session.EndTime <= session.StartTime)
+        {
+            errorMessage = "Error: The session cannot end before it starts!";
+            submitted = false;
+            return;
+        }
+
+        try 
+        {
+            var response = await Http.PostAsJsonAsync("api/Sessions", session);
+            if (response.IsSuccessStatusCode)
+            {
+                submitted = true;
+                errorMessage = null;
+
+                session = new Session {
+                    StartTime = DateTime.Today.AddHours(9),
+                    EndTime = DateTime.Today.AddHours(10),
+                    Instructor = "",
+                    Capacity = 0,
+                    Status = SessionStatus.Available,
+                };
+            }
+            else
+            {
+                errorMessage = $"Server error: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving: {ex.Message}";
+        }
+    }
+}
