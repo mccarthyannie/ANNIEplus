@@ -1,4 +1,5 @@
 @page "/schedule"
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
 @inject HttpClient Http
@@ -125,7 +126,7 @@
         {
             var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
             
-            var result = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+            var result = await Http.GetFromJsonAsync<List<Session>>(url);
             sessions = result ?? new List<Session>();
             
             StateHasChanged(); 
