@@ -94,13 +94,13 @@
     private Session? selectedSession;
     private List<Session> sessions = new();
 
-    private void GoToNextWeek()
+    private async Task GoToNextWeek()
     {
         currentStartDate = currentStartDate.AddDays(7);
         await LoadSessions();
     }
 
-    private void GoToPreviousWeek()
+    private async Task GoToPreviousWeek()
     {
         currentStartDate = currentStartDate.AddDays(-7);
         await LoadSessions();
