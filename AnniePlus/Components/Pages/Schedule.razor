@@ -4,51 +4,63 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 
-<div class="scheduler">
-    <h2 class="mb-4">Class Schedule</h2>"
-
+<div class="scheduler-grid">
     @for (int i = 0; i < 7; i++)
     {
-        var date = DateTime.Today.AddDays(i);
-        <h3 class="date-header">@date.ToString("ddd, MMM, d")</h3>
-        @foreach (var day in GroupedSessions)
-        {
-            <h3 class="date-header">@day.Key.ToString("ddd, MMM, d")</h3>
+        var targetDate = DateTime.Today.AddDays(i);
+        var daySessions = sessions
+            .Where(s => s.StartTime.ToLocalTime().Date == targetDate.Date)
+            .OrderBy(s => s.StartTime)
+            .ToList();
 
-            @foreach (var session in day)
-            {
-                <div class="class">
-                    <div class="slot">
-                        <span class="start-time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</span>
-                        <span class="duration">@CalculateDuration(session) min</span>       
-                    </div>
+        <div class="day-column">
+            <div class="day-header">
+                <span class="day-name">@targetDate.ToString("ddd")</span>
+                <span class="day-date">@targetDate.ToString("MMM d")</span>
+            </div>
 
-                    <div class="info">
-                        <h4 class="class-name">@session.Name</h4>
-                        <p class="instructor">Instructor: @session.Instructor</p>
-                        <p class="location"><i class="bi bi-geo-alt"></i> @session.Location</p>
-                    </div>
-
-                    <div class="actions">
-                        <span class="capacity">[booked amount]/@session.Capacity spots available</span>
-                        <button class="book-button">Book</button>
-                    </div>
-                </div>
-            }
-        }
+            <div class="sessions-list">
+                @if (!daySessions.Any())
+                {
+                    <div class="no-classes">No Classes</div>
+                }
+                else
+                {
+                    @foreach (var session in daySessions)
+                    {
+                        <div class="session-card">
+                            <div class="time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</div>
+                            <div class="name">@session.Name</div>
+                            <div class="instructor">w/ @session.Instructor</div>
+                            
+                            <div class="meta">
+                                <span>@session.Capacity spots available</span>
+                            </div>
+                            
+                            <button class="book-btn">BOOK</button>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
     }
 </div>
 
 @code 
 {
     private List<Session> sessions = new();
-    private IEnumerable<IGrouping<DateTime, Session>> GroupedSessions => 
-    sessions.OrderBy(s => s.StartTime)
-            .GroupBy(s => s.StartTime.Date);
 
     protected override async Task OnInitializedAsync()
     {
-        sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+        try 
+        {
+            var result = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+            sessions = result ?? new List<Session>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error: {ex.Message}");
+        }
     }
 
     private string CalculateDuration(Session s) => 
