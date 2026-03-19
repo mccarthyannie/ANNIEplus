@@ -89,10 +89,20 @@
 
 @code 
 {
+    private DateTime currentStartDate = DateTime.Today;
     private bool showPopup = false;
     private Session? selectedSession;
     private List<Session> sessions = new();
 
+    private void GoToNextWeek()
+    {
+        currentStartDate = currentStartDate.AddDays(7);
+    }
+
+    private void GoToPreviousWeek()
+    {
+        currentStartDate = currentStartDate.AddDays(-7);
+    }
 
     private async Task OpenPopup(Session session)
     {
