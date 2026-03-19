@@ -28,7 +28,7 @@
 <div class="scheduler-grid">
     @for (int i = 0; i < 7; i++)
     {
-        var targetDate = currentSTartDate.AddDays(i);
+        var targetDate = currentStartDate.AddDays(i);
         var daySessions = sessions
             .Where(s => s.StartTime.ToLocalTime().Date == targetDate.Date)
             .OrderBy(s => s.StartTime)
