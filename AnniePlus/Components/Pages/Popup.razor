@@ -18,6 +18,6 @@
     private async Task close()
     {
         visible=false;
-        await visibleChnaged.InvokeAsync(visible);
+        await visibleChanged.InvokeAsync(visible);
     }
 }
