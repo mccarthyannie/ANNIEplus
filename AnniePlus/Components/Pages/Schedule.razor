@@ -97,11 +97,13 @@
     private void GoToNextWeek()
     {
         currentStartDate = currentStartDate.AddDays(7);
+        await LoadSessions();
     }
 
     private void GoToPreviousWeek()
     {
         currentStartDate = currentStartDate.AddDays(-7);
+        await LoadSessions();
     }
 
     private async Task OpenPopup(Session session)
@@ -114,14 +116,23 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadSessions();
+    }
+
+    private async Task LoadSessions()
+    {
         try 
         {
+            var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
+            
             var result = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
             sessions = result ?? new List<Session>();
+            
+            StateHasChanged(); 
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error: {ex.Message}");
+            Console.WriteLine($"Error loading sessions: {ex.Message}");
         }
     }
 
