@@ -3,6 +3,7 @@
 @using Annie_API.Models
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
 
 <PageTitle>Schedule</PageTitle>
 <div class="d-flex justify-content-between align-items-center mb-4">
@@ -61,7 +62,7 @@
             <div style="margin-bottom: 20px; line-height: 1.6;">
                 <p style="font-size: 1.2rem; margin-bottom: 5px;"><strong>@selectedSession.Name</strong></p>
                 <p>@selectedSession.StartTime.ToLocalTime().ToString("dddd, MMM d")</p>
-                <p><strong>@selectedSession.StartTime.ToLocalTime().ToString("h:mm tt")</strong> (@CalculateDuration(selectedSession) min)</p>
+                <p><strong>@selectedSession.StartTime.ToLocalTime().ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
                 <p class="text-muted">Instructor: @selectedSession.Instructor</p>
             </div>
         }
@@ -91,6 +92,15 @@
         showPopup = true;
     }
     private void ClosePopup() => showPopup = false;
+    
+    private async Task HandleValidSubmit()
+{
+    var response = await Http.PostAsJsonAsync("api/bookings", booking);
+    if(response.IsSuccessStatusCode) 
+    {
+        showPopup = false;
+    }
+}
 
     protected override async Task OnInitializedAsync()
     {
