@@ -170,7 +170,7 @@
                 SessionId = selectedSession.Id
             };
 
-            var response = await Http.PostAsJsonAsync("api/Bookings", booking);
+            var response = await Http.PostAsJsonAsync("api/Bookings", request);
             
             if (response.IsSuccessStatusCode)
             {

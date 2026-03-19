@@ -46,24 +46,16 @@
         <ValidationMessage For="@(() => session.Description)" />
     </div>
 
-    @*select the date*@
-    <div class="row mb-3">
-        <div class="col-12">
-            <label>Session Date:</label>
-            <InputDate Type="InputDateType.Date" @bind-Value="session.StartTime" class="form-control" />
-        </div>
-    </div>
-
     @*select the start and end time*@
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Start Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.StartTime" class="form-control" />
+            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="session.StartTime" class="form-control" />
         </div>
 
         <div class="col-md-6">
             <label class="form-label">End Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.EndTime" class="form-control" />
+            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="session.EndTime" class="form-control" />
         </div>
     </div>
      
@@ -96,37 +88,19 @@
         Capacity = 0,
         Status = SessionStatus.Available,
     };
-    
-    protected override void OnInitialized()
-    {
-        session.StartTime = DateTime.Today.AddHours(9);
-        session.EndTime = DateTime.Today.AddHours(10);
-        session.Instructor = "";
-        session.Capacity = 0;
-        session.Status = SessionStatus.Available;
-    }
 
     private bool submitted = false;
     private string? errorMessage;
-
+    private DateTime date = DateTime.Today;
+    
     private async Task HandleSubmit()
     {
-
-    var finalStart = new DateTime(
-            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day,
-            session.StartTime.Hour, session.StartTime.Minute, 0);
-
-        var finalEnd = new DateTime(
-            session.StartTime.Year, session.StartTime.Month, session.StartTime.Day, // Use StartDate for EndDate
-            session.EndTime.Hour, session.EndTime.Minute, 0);
-
-        session.StartTime = DateTime.SpecifyKind(finalStart, DateTimeKind.Utc);
-        session.EndTime = DateTime.SpecifyKind(finalEnd, DateTimeKind.Utc);
+        session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);
+        session.EndTime = DateTime.SpecifyKind(session.EndTime, DateTimeKind.Utc);
 
         if (session.EndTime <= session.StartTime)
         {
             errorMessage = "Error: The session cannot end before it starts!";
-            submitted = false;
             return;
         }
 
