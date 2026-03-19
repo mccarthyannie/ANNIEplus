@@ -1,0 +1,21 @@
+@if (visible)
+{
+    <div class="popup" @onclick="close">
+        <div class="popup-container" @onclick:stopPropagation="true">
+            @ChildContent
+        </div>
+    </div>       
+}
+
+@code 
+{
+    [Parameter] public bool visible { get; set; }
+    [Parameter] public EventCallBack<bool> visibleChanged {get; set; }
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+
+    private async Task close()
+    {
+        visible=false;
+        await visibleChnaged.InvokeAsync(visible);
+    }
+}
