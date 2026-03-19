@@ -1,38 +1,86 @@
-.class {
+.scheduler-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr); /* Forces exactly 7 columns */
+    gap: 0;
+    border-top: 1px solid #eee;
+    background: #fff;
+    min-height: 80vh;
+}
+
+.day-column {
+    border-right: 1px solid #eee;
     display: flex;
-    align-content: center;
-    padding: 20px;
-    border-bottom: 1px solid #eee;
-    background: white;
-    transition: background 0.2s;
+    flex-direction: column;
 }
 
-    .class:hover {
-        background: #f9f9f9;
-    }
-
-    .slot {
-        flex: 0 0 100px;
-        display: flex;
-        flex-direction: column;
-    }
-
-.start-time {
-    font-weight: 700;
-    font-size: 1.2em;
-    color: #333;
+.day-header {
+    padding: 15px;
+    text-align: center;
+    background: #fafafa;
+    border-bottom: 2px solid #000;
 }
 
-.class-name {
-    letter-spacing: 1px;
-    margin: 0;
-}
-
-.book-button {
-    background-color: aqua;
-    color: white;
-    border: none;
-    padding: 10px 25px;
+.day-name {
+    display: block;
     font-weight: bold;
-    cursor: pointer;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+}
+
+.day-date {
+    font-size: 1.1rem;
+    color: #666;
+}
+
+.sessions-list {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.session-card {
+    border: 1px solid #e0e0e0;
+    padding: 12px;
+    background: white;
+    transition: 0.2s;
+}
+
+    .session-card:hover {
+        border-color: #000;
+    }
+
+.time {
+    font-weight: 800;
+    font-size: 0.8rem;
+}
+
+.name {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    margin: 4px 0;
+    font-weight: 600;
+}
+
+.instructor {
+    font-size: 0.75rem;
+    color: #888;
+}
+
+.book-btn {
+    width: 100%;
+    background: #000;
+    color: #fff;
+    border: none;
+    margin-top: 10px;
+    padding: 6px;
+    font-size: 0.7rem;
+    font-weight: bold;
+}
+
+.no-classes {
+    text-align: center;
+    color: #ccc;
+    font-size: 0.8rem;
+    padding-top: 20px;
 }
