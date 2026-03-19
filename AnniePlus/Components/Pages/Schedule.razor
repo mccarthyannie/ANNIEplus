@@ -7,31 +7,36 @@
 <div class="scheduler">
     <h2 class="mb-4">Class Schedule</h2>"
 
-    @foreach (var day in GroupedSessions)
+    @for (int i = 0; i < 7; i++)
     {
-        <h3 class="date-header">@day.Key.ToString("ddd, MMM, d")</h3>
-
-        @foreach (var session in day)
+        var date = DateTime.Today.AddDays(i);
+        <h3 class="date-header">@date.ToString("ddd, MMM, d")</h3>
+        <p class="no-classes)
+        @foreach (var day in GroupedSessions)
         {
-            <div class="class">
-                <div class="slot">
-                    <span class="start-time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</span>
-                    <span class="duration">@CalculateDuration(session) min</span>       
-                </div>
+            <h3 class="date-header">@day.Key.ToString("ddd, MMM, d")</h3>
 
-                <div class="info">
-                    <h4 class="class-name">@session.Name</h4>
-                    <p class="instructor">Instructor: @session.Instructor</p>
-                    <p class="location"><i class="bi bi-geo-alt"></i> @session.Location</p>
-                </div>
+            @foreach (var session in day)
+            {
+                <div class="class">
+                    <div class="slot">
+                        <span class="start-time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</span>
+                        <span class="duration">@CalculateDuration(session) min</span>       
+                    </div>
 
-                <div class="actions">
-                    <span class="capacity">[booked amount]/@session.Capacity spots available</span>
-                    <button class="book-button">Book</button>
+                    <div class="info">
+                        <h4 class="class-name">@session.Name</h4>
+                        <p class="instructor">Instructor: @session.Instructor</p>
+                        <p class="location"><i class="bi bi-geo-alt"></i> @session.Location</p>
+                    </div>
+
+                    <div class="actions">
+                        <span class="capacity">[booked amount]/@session.Capacity spots available</span>
+                        <button class="book-button">Book</button>
+                    </div>
                 </div>
-            </div>
+            }
         }
-    }
 </div>
 
 @code 
