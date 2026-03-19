@@ -1,6 +1,6 @@
 .scheduler-grid {
     display: grid;
-    grid-template-columns: repeat(7, 1fr); 
+    grid-template-columns: repeat(7, 1fr); /* Forces exactly 7 columns */
     gap: 0;
     border-top: 1px solid #eee;
     background: #fff;
@@ -41,35 +41,22 @@
 
 .session-card {
     border: 1px solid #e0e0e0;
-    padding-top: 8px;
-    padding-bottom: 2px;
+    padding: 12px;
     background: white;
+    transition: 0.2s;
 }
 
-    .session-card:hover {
-        border-color: #000;
-    }
-
-.time {
-    font-weight: 800;
-    font-size: 0.8rem;
+.session-card:hover {
+    border-color: #000;
 }
 
-.name {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    margin: 4px 0;
-    font-weight: 600;
-}
-
-.instructor {
-    font-size: 0.75rem;
-    color: #888;
-}
+.time { font-weight: 800; font-size: 0.8rem; }
+.name { font-size: 0.85rem; text-transform: uppercase; margin: 4px 0; font-weight: 600; }
+.instructor { font-size: 0.75rem; color: #888; }
 
 .book-btn {
     width: 100%;
-    background: aqua;
+    background: #000;
     color: #fff;
     border: none;
     margin-top: 10px;
