@@ -1,26 +1,29 @@
 @page "/schedule"
 @rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
 @inject HttpClient Http
+@using System.Security.Claims
 @inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
 
 <PageTitle>Schedule</PageTitle>
 
 <div class="schedule-nav d-flex align-items-center justify-content-between p-3">
-    <button class="btn btn-outline-dark" @onclick="GoToPreviousWeek">
-        <i class="bi bi-chevron-left"></i> <
+    <button class="btn" @onclick="GoToPreviousWeek">
+        <i class="bi bi-chevron-left"></i> +
     </button>
     
     <h2 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h2>
     
-    <button class="btn btn-outline-dark" @onclick="GoToNextWeek">
-        > <i class="bi bi-chevron-right"></i>
+    <button class="btn" @onclick="GoToNextWeek">
+        - <i class="bi bi-chevron-right"></i>
     </button>
 </div>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Weekly Schedule</h2>
+    <h4>Weekly Schedule</h4>
     <NavLink class="nav-link" href="create-session">
                 <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
      </NavLink>
@@ -73,7 +76,7 @@
         @if (selectedSession != null)
         {
             <div style="margin-bottom: 20px; line-height: 1.6;">
-                <p style="font-size: 1.2rem; margin-bottom: 5px;"><strong>@selectedSession.Name</strong></p>
+                <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
                 <p>@selectedSession.StartTime.ToLocalTime().ToString("dddd, MMM d")</p>
                 <p><strong>@selectedSession.StartTime.ToLocalTime().ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
                 <p class="text-muted">Instructor: @selectedSession.Instructor</p>
@@ -81,8 +84,9 @@
         }
 
         <div style="display: flex; gap: 10px; margin-top: 25px;">
-            <button class="btn btn-secondary w-100" @onclick="ClosePopup">CANCEL</button>
-            <button class="btn btn-dark w-100">CONFIRM BOOKING</button>
+            <button class="btn btn-dark w-100" @onclick="HandleBooking">
+                Confirm Booking
+            </button>
         </div>
     </div>
 </Popup>
@@ -90,9 +94,12 @@
 
 @code 
 {
+    private Booking booking = new();
     private DateTime currentStartDate = DateTime.Today;
     private bool showPopup = false;
+    private bool submitted = false;
     private Session? selectedSession;
+    private string? errorMessage;
     private List<Session> sessions = new();
 
     private async Task GoToNextWeek()
@@ -139,4 +146,47 @@
 
     private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();
+
+    private async Task HandleBooking()
+    {
+        if (selectedSession == null) return;
+
+        try 
+        {
+            var authState = await AuthProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
+            var userIdString = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrEmpty(userIdString))
+            {
+                errorMessage = "You must be logged in to book.";
+                StateHasChanged();
+                return;
+            }
+
+            var request = new 
+            { 
+                UserId = long.Parse(userIdString),
+                SessionId = selectedSession.Id
+            };
+
+            var response = await Http.PostAsJsonAsync("api/Bookings", booking);
+            
+            if (response.IsSuccessStatusCode)
+            {
+                showPopup = false;
+                errorMessage = null;
+                await LoadSessions();
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving: {ex.Message}";
+        }
+        StateHasChanged();
+    }
 }
