@@ -85,9 +85,6 @@
     private async Task OpenPopup(Session session)
     {
         selectedSession = session;
-        
-        var authState = await AuthProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
 
         showPopup = true;
     }
