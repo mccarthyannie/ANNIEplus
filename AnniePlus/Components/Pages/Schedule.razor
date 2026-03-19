@@ -33,3 +33,19 @@
         }
     }
 </div>
+
+@code 
+{
+    private List<Session> sessions = new();
+    private IEnumerable<IGrouping<DateTime, Session>> GroupedSessions => 
+    sessions.OrderBy(s => s.StartTime)
+            .GroupBy(s => s.StartTime.Date);
+
+    protected override async Task OnInitializedAsync()
+    {
+        sessions = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+    }
+
+    private string CalculateDuration(Session s) => 
+        (s.EndTime - s.StartTime).TotalMinutes.ToString();
+}
