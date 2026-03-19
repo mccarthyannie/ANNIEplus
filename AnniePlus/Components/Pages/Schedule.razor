@@ -4,6 +4,10 @@
 @inject HttpClient Http
 @inject NavigationManager Nav
 
+<PageTitle>Schedule</PageTitle>
+
+<button class="btn btn-primary mb-3" @onclick="() => Nav.NavigateTo("/create-session")">Create Session</button>
+
 <div class="scheduler-grid">
     @for (int i = 0; i < 7; i++)
     {
@@ -29,15 +33,15 @@
                     @foreach (var session in daySessions)
                     {
                         <div class="session-card">
-                            <div class="time">@session.StartTime.ToLocalTime().ToString("h:mm tt")</div>
                             <div class="name">@session.Name</div>
-                            <div class="instructor">w/ @session.Instructor</div>
+                            <div class="time">@session.StartTime.ToLocalTime().ToString("h:mm tt") @Duration(session) min</div>
+                            <div class="instructor">@session.Instructor</div>
                             
                             <div class="meta">
                                 <span>@session.Capacity spots available</span>
                             </div>
                             
-                            <button class="book-btn">BOOK</button>
+                            <button class="book-btn">Book</button>
                         </div>
                     }
                 }
@@ -63,6 +67,6 @@
         }
     }
 
-    private string CalculateDuration(Session s) => 
+    private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();
 }
