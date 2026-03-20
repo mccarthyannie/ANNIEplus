@@ -9,7 +9,7 @@
 
 <div class="schedule-nav d-flex align-items-center justify-content-between p-3">
     <button class="btn btn-outline-dark" @onclick="GoToPreviousWeek">
-        <i class="bi bi-chevron-left"></i> <
+        <i class="bi bi-chevron-left"></i> 
     </button>
     
     <h2 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h2>
@@ -81,8 +81,9 @@
         }
 
         <div style="display: flex; gap: 10px; margin-top: 25px;">
-            <button class="btn btn-secondary w-100" @onclick="ClosePopup">CANCEL</button>
-            <button class="btn btn-dark w-100">CONFIRM BOOKING</button>
+            <button class="btn btn-dark w-100" @onclick="HandleBooking">
+                Confirm Booking
+            </button>
         </div>
     </div>
 </Popup>
