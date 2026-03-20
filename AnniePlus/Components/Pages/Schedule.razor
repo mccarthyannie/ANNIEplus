@@ -10,6 +10,7 @@
 @using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
 
 <PageTitle>Schedule</PageTitle>
 
@@ -104,7 +105,7 @@
     private Session? selectedSession;
     private string? errorMessage;
     private List<Session> sessions = new();
-    public static UserDTO? CurrentUser { get; set; }
+    public static UserDTO? CurrentUser;
 
     private async Task GoToNextWeek()
     {
@@ -127,8 +128,26 @@
     private void ClosePopup() => showPopup = false;
 
     protected override async Task OnInitializedAsync()
-    {
+    {   
         await LoadSessions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
+        
+            if (json != null)
+            {
+                CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
+            }
+            else
+            {
+                Nav.NavigateTo("/login");
+            }
+            StateHasChanged();
+        }
     }
 
     private async Task LoadSessions()
@@ -155,6 +174,18 @@
     {
         if (selectedSession == null) return;
 
+        if (CurrentUser == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var request = new 
+        {
+            UserId = CurrentUser.Id,
+            SessionId = selectedSession.Id
+        };
+
         try 
         {
             var userId = CurrentUser?.Id;
@@ -166,13 +197,13 @@
                 return;
             }
 
-            var request = new 
+            var bookingRequest = new 
             { 
                 UserId = userId,
                 SessionId = selectedSession.Id
             };
 
-            var response = await Http.PostAsJsonAsync("api/Bookings", request);
+            var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
             
             if (response.IsSuccessStatusCode)
             {

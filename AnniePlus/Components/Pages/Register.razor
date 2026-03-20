@@ -1,29 +1,34 @@
 @page "/register"
+@rendermode InteractiveServer
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
 @inject HttpClient Http
 @inject NavigationManager Nav
 @using Annie_API.DTOs
 
+<PageTitle>Create Session</PageTitle>
+
 <h3>Register</h3>
 
 <EditForm Model="newUser" OnValidSubmit="@HandleRegister" FormName="RegisterForm">
-    
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
     <div class="form-group mb-3">
         <label>Name:</label>
-        <InputText @bind-Value="newUser.Name" class="form-control" />
+        <InputText class="form-control" @bind-Value="newUser.Name"/>
         <ValidationMessage For="@(() => newUser.Name)" />
     </div>
 
     <div class="form-group mb-3">
         <label>Email:</label>
-        <InputText id="email" @bind-Value="newUser.Email" class="form-control" />
+        <InputText class="form-control" @bind-Value="newUser.Email"/>
         <ValidationMessage For="@(() => newUser.Email)" />
     </div>
 
     <div class="form-group mb-3">
         <label>Password:</label>
-        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
+        <InputText type="password" class="form-control" @bind-Value="newUser.Password"/>
         <ValidationMessage For="@(() => newUser.Password)" />
     </div>
      
