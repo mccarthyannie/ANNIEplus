@@ -1,2 +1,64 @@
 @page "/bookings"
 
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@using AnniePlus.Components.Pages
+@using Annie_API.DTOs
+@inject HttpClient Http
+@using System.Security.Claims
+@using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+
+<PageTitle>Bookings</PageTitle>
+
+@foreach (var booking in myBookings)
+{
+    <div class = "booking-card">
+        <h5>@booking.sessionId.Name</h5>
+        <p>@booking.sessionId.StartTime.ToString("dddd, MMMM d")</p>
+        <p>@booking.sessionId.Instructor</p>
+    </div>
+}
+
+@code 
+{
+    private List<Session>? myBookings;
+    private UserDTO? CurrentUser;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
+
+            if (json == null)
+            {
+                Nav.NavigateTo("/login");
+                return;
+            }
+            
+            CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
+
+            await LoadBookings();
+            StateHasCHanged();
+        }
+    }
+
+    private async Task LoadBookings()
+    {
+        try 
+        {
+            isLoading = true;
+            sessions = await Http.GetFromJsonAsync<List><Session>>($"api/Bookings/User/{CurrentUser!.Id}");
+            sessions ??= new();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading bookings: {ex.Message}";
+        }
+    }
+}
