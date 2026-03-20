@@ -46,24 +46,16 @@
         <ValidationMessage For="@(() => session.Description)" />
     </div>
 
-    @*select the date*@
-    <div class="row mb-3">
-        <div class="col-12">
-            <label>Session Date:</label>
-            <InputDate Type="InputDateType.Date" @bind-Value="session.StartTime" class="form-control" />
-        </div>
-    </div>
-
     @*select the start and end time*@
     <div class="row mb-3">
         <div class="col-md-6">
             <label class="form-label">Start Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.StartTime" class="form-control" />
+            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="session.StartTime" class="form-control" />
         </div>
 
         <div class="col-md-6">
             <label class="form-label">End Time:</label>
-            <InputDate Type="InputDateType.Time" @bind-Value="session.EndTime" class="form-control" />
+            <InputDate Type="InputDateType.DateTimeLocal" @bind-Value="session.EndTime" class="form-control" />
         </div>
     </div>
      
@@ -86,37 +78,29 @@
 }
 
 @code {
-    private DateTime dateOnly = DateTime.Today;
-    private DateTime startTimeOnly = DateTime.Today.AddHours(9);
-    private DateTime endTimeOnly = DateTime.Today.AddHours(10);
     
     [SupplyParameterFromForm]
-    private Session session { get; set; } = new() 
-    {
-        StartTime = DateTime.Today.AddHours(9),
+    private Session session { get; set; } = new Session 
+    { 
+        StartTime = DateTime.Today.AddHours(9), 
         EndTime = DateTime.Today.AddHours(10),
-        Instructor = "",
-        Capacity = 45,
+        Instructor = "", 
+        Capacity = 0,
         Status = SessionStatus.Available,
     };
 
     private bool submitted = false;
     private string? errorMessage;
-
+    private DateTime date = DateTime.Today;
+    
     private async Task HandleSubmit()
     {
-        var start = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, 
-                             startTimeOnly.Hour, startTimeOnly.Minute, 0);
-        var end = new DateTime(dateOnly.Year, dateOnly.Month, dateOnly.Day, 
-                           endTimeOnly.Hour, endTimeOnly.Minute, 0);
-
-        session.StartTime = DateTime.SpecifyKind(start, DateTimeKind.Utc);
-        session.EndTime = DateTime.SpecifyKind(end, DateTimeKind.Utc);
+        session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);
+        session.EndTime = DateTime.SpecifyKind(session.EndTime, DateTimeKind.Utc);
 
         if (session.EndTime <= session.StartTime)
         {
             errorMessage = "Error: The session cannot end before it starts!";
-            submitted = false;
             return;
         }
 
@@ -132,7 +116,7 @@
                     StartTime = DateTime.Today.AddHours(9),
                     EndTime = DateTime.Today.AddHours(10),
                     Instructor = "",
-                    Capacity = 45,
+                    Capacity = 0,
                     Status = SessionStatus.Available,
                 };
             }

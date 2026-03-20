@@ -23,26 +23,50 @@ namespace Annie_API.Controllers
 
         // GET: api/Bookings
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Booking>>> GetBookings()
+        public async Task<ActionResult<IEnumerable<BookingDTO>>> GetBookings()
         {
-            return await _context.Bookings.ToListAsync();
+            return await _context.Bookings.Select(b => new BookingDTO 
+                                                            { Id = b.Id,
+                                                                UserId = b.UserId,
+                                                                UserName = b.User.Name,
+                                                                SessionId = b.SessionId,
+                                                                SessionName = b.Session.Name,
+                                                                BookingDate = b.BookingDate})
+                                                            .ToListAsync();
         }
 
-        // Returns the sessions 
+        // Returns a booking by its id 
+        // GET: api/Bookings/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<BookingDTO>> GetBooking(long id)
+        {
+            var booking = await _context.Bookings
+                                            .Include(b => b.User)
+                                            .Include(b => b.Session)
+                                            .FirstOrDefaultAsync(b=> b.Id == id);
+
+            if (booking == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new BookingDTO
+            {
+                Id = booking.Id,
+                UserId = booking.UserId,
+                UserName = booking.User.Name,
+                SessionId = booking.SessionId,
+                SessionName = booking.Session?.Name,
+                BookingDate = booking.BookingDate
+            });
+        }
+
+        // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
         [HttpGet("User/{id}")]
         public async Task<ActionResult<List<Session>>> GetBookingByUser(long id)
         {
-            var bookings = await _context.Bookings.Where(u => u.UserId == id).ToListAsync();
-            
-            List<Session> sessions = new List<Session>();
-
-            foreach (var booking in bookings)
-            {
-                sessions.Add(booking.Session);
-            }
-
-            return sessions;
+            return await _context.Bookings.Where(u => u.UserId == id).Select(u => u.Session).ToListAsync();
         }
 
         // Returns the users that booked the session
@@ -50,70 +74,16 @@ namespace Annie_API.Controllers
         [HttpGet("Session/{id}")]
         public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
-            var bookings = await _context.Bookings.Where(u => u.SessionId == id).ToListAsync();
-
-            List<UserDTO> users = new List<UserDTO>();
-
-            foreach (var booking in bookings)
-            {
-                users.Add(new UserDTO {
-                    Id = booking.User.Id,
-                    Name = booking.User.Name,
-                    Email = booking.User.Email
-                });
-            }
-
-            return users;
-        }
-
-        // PUT: api/Bookings/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]   
-        public async Task<IActionResult> PutBooking(long id, BookingRequest booking)
-        {
-            if (!BookingExists(id))
-            {
-                return NotFound();
-            }
-            if (booking == null || !UserExists(booking.UserId) || !SessionExists(booking.SessionId))
-            {
-                return BadRequest();
-            }
-
-            var newBooking = new Booking
-            {
-                Id = id,
-                UserId = booking.UserId,
-                SessionId = booking.SessionId,
-                BookingDate = DateTime.UtcNow
-            };
-            
-            _context.Entry(newBooking).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!BookingExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
+            return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
+                                                                                            { Id = b.User.Id,                                                                                Role = b.User.Role})
+                                                                                            .ToListAsync();
         }
 
         // TODO : use authorize and claim to validate user and prevent booking to other users 
         // POST: api/Bookings
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        public async Task<ActionResult<Booking>> PostBooking(BookingRequest request)
+        public async Task<ActionResult<BookingDTO>> PostBooking(BookingRequest request)
         {
             if (request == null)
             {
@@ -146,7 +116,15 @@ namespace Annie_API.Controllers
             _context.Bookings.Add(booking);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetBooking", new { id = booking.Id }, booking);
+            return CreatedAtAction("GetBooking", 
+                                    new { id = booking.Id }, 
+                                    new BookingDTO { 
+                                        Id = booking.Id,
+                                        UserId = booking.UserId,
+                                        UserName = user.Name,
+                                        SessionId = booking.SessionId,
+                                        SessionName = session.Name,
+                                        BookingDate = booking.BookingDate});
         }
 
         // DELETE: api/Bookings/5

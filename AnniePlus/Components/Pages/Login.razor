@@ -1,0 +1,48 @@
+@page "/login"
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using Annie_API.DTOs
+
+<h3>Login</h3>
+
+<input @bind="email" placeholder="Email" />
+<input @bind="password" type="password" placeholder="Password" />
+<button @onclick="HandleLogin">Login</button>
+
+@if (errorMessage != null)
+{
+    <p style="color:red">@errorMessage</p>
+}
+
+@code 
+{
+    public static UserDTO? CurrentUser { get; private set; }
+    public static bool IsLoggedIn => CurrentUser != null;
+
+    private string email = "";
+    private string password = "";
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var request = new LoginRequest
+        {
+            Email = email,
+            Password = password
+        };
+
+        var response = await Http.PostAsJsonAsync("api/login", request);
+        if (response.IsSuccessStatusCode)
+        {
+            var user = await response.Content.ReadFromJsonAsync<UserDTO>();
+            CurrentUser = user;
+            Nav.NavigateTo("/schedule");
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}

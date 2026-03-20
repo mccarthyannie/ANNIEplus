@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Annie_API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260318004728_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20260318231309_SyncLatestChanges")]
+    partial class SyncLatestChanges
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -68,7 +68,7 @@ namespace Annie_API.Migrations
                     b.Property<DateTime>("EndTime")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("Instructors")
+                    b.Property<string>("Instructor")
                         .IsRequired()
                         .HasColumnType("text");
 
