@@ -9,7 +9,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 builder.Services.AddDbContext<DataContext>(opt =>
@@ -17,6 +16,7 @@ builder.Services.AddDbContext<DataContext>(opt =>
         builder.Configuration.GetConnectionString("DefaultConnection"),
         o => o.EnableRetryOnFailure()
         ));
+
 
 // transient used because seeding database will only be done when no users are present
 builder.Services.AddTransient<SeedData>();

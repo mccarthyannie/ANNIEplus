@@ -1,0 +1,58 @@
+@page "/register"
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+@using Annie_API.DTOs
+
+<h3>Register</h3>
+
+<EditForm Model="newUser" OnValidSubmit="@HandleRegister" FormName="RegisterForm">
+    
+    <div class="form-group mb-3">
+        <label>Name:</label>
+        <InputText @bind-Value="newUser.Name" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Name)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText id="email" @bind-Value="newUser.Email" class="form-control" />
+        <ValidationMessage For="@(() => newUser.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Password:</label>
+        <InputText @bind-Value="newUser.Password" class="form-control" type="password" />
+        <ValidationMessage For="@(() => newUser.Password)" />
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Sign Up</button>
+
+</EditForm>
+
+@code {
+    private RegisterUserRequest newUser = new();
+    private string? errorMessage;
+
+    private async Task HandleRegister()
+    {
+        var response = await Http.PostAsJsonAsync("api/register", newUser);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Nav.NavigateTo("/login");
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}

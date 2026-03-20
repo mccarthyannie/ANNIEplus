@@ -29,7 +29,7 @@ namespace Annie_API.Controllers
         [HttpPost]
         public async Task<ActionResult<UserDTO>> LoginUser(LoginRequest request)
         {
-            var user =  _context.Users
+            var user = _context.Users
                 .FirstOrDefault(u => u.Email == request.Email);
 
             if (user == null) 
