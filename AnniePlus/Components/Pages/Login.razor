@@ -1,0 +1,62 @@
+@page "/login"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+@using Annie_API.DTOs
+
+<h3>Login</h3>
+
+<EditForm Model="request" OnValidSubmit="@HandleLogin" FormName="LoginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText class="form-control" @bind-Value="request.Email"/>
+        <ValidationMessage For="@(() => request.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Password:</label>
+        <InputText type="password" class="form-control" @bind-Value="request.Password"/>
+        <ValidationMessage For="@(() => request.Password)" />
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Log in</button>
+
+</EditForm>
+
+@code 
+{
+    public static UserDTO? CurrentUser { get; private set; }
+    public static bool IsLoggedIn => CurrentUser != null;
+    private LoginRequest request = new();
+    private string? errorMessage;
+
+    private async Task HandleLogin()
+    {
+        var response = await Http.PostAsJsonAsync("api/login", request);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            var user = await response.Content.ReadFromJsonAsync<UserDTO>();
+            await JS.InvokeVoidAsync("localStorage.setItem", "currentUser", 
+            System.Text.Json.JsonSerializer.Serialize(user));
+            Nav.NavigateTo("/schedule");
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}

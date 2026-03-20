@@ -3,10 +3,14 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
+@using AnniePlus.Components.Pages
+@using Annie_API.DTOs
 @inject HttpClient Http
 @using System.Security.Claims
+@using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages
 @inject NavigationManager Nav
 @inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
 
 <PageTitle>Schedule</PageTitle>
 
@@ -34,7 +38,7 @@
     {
         var targetDate = currentStartDate.AddDays(i);
         var daySessions = sessions
-            .Where(s => s.StartTime.ToLocalTime().Date == targetDate.Date)
+            .Where(s => s.StartTime.Date == targetDate.Date)
             .OrderBy(s => s.StartTime)
             .ToList();
 
@@ -55,7 +59,7 @@
                     {
                         <div class="session-card">
                             <div class="name">@session.Name</div>
-                            <div class="time">@session.StartTime.ToLocalTime().ToString("h:mm tt") @Duration(session) min</div>
+                            <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
                             <div class="instructor">@session.Instructor</div>
                             
                             <div class="meta">
@@ -69,28 +73,28 @@
             </div>
         </div>
     }
-    <Popup @bind-Visible="showPopup">
-    <div class="popup-content" style="text-align: center; padding: 10px;">
-        <h3 style="text-transform: uppercase; margin-bottom: 20px;">Confirm Booking</h3>
-        
-        @if (selectedSession != null)
-        {
-            <div style="margin-bottom: 20px; line-height: 1.6;">
-                <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
-                <p>@selectedSession.StartTime.ToLocalTime().ToString("dddd, MMM d")</p>
-                <p><strong>@selectedSession.StartTime.ToLocalTime().ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
-                <p class="text-muted">Instructor: @selectedSession.Instructor</p>
-            </div>
-        }
-
-        <div style="display: flex; gap: 10px; margin-top: 25px;">
-            <button class="btn btn-dark w-100" @onclick="HandleBooking">
-                Confirm Booking
-            </button>
-        </div>
-    </div>
-</Popup>
 </div>
+    <Popup @bind-Visible="showPopup">
+        <div class="popup-content" style="text-align: center; padding: 10px;">
+            <h3 style="text-transform: uppercase; margin-bottom: 20px;">Confirm Booking</h3>
+            
+            @if (selectedSession != null)
+            {
+                <div style="margin-bottom: 20px; line-height: 1.6;">
+                    <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
+                    <p>@selectedSession.StartTime.ToString("dddd, MMM d")</p>
+                    <p><strong>@selectedSession.StartTime.ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                    <p class="text-muted">Instructor: @selectedSession.Instructor</p>
+                </div>
+            }
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="btn btn-dark w-100" @onclick="HandleBooking">
+                    Confirm Booking
+                </button>
+            </div>
+        </div>
+    </Popup>
 
 @code 
 {
@@ -101,6 +105,7 @@
     private Session? selectedSession;
     private string? errorMessage;
     private List<Session> sessions = new();
+    public static UserDTO? CurrentUser;
 
     private async Task GoToNextWeek()
     {
@@ -123,8 +128,26 @@
     private void ClosePopup() => showPopup = false;
 
     protected override async Task OnInitializedAsync()
-    {
+    {   
         await LoadSessions();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
+        
+            if (json != null)
+            {
+                CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
+            }
+            else
+            {
+                Nav.NavigateTo("/login");
+            }
+            StateHasChanged();
+        }
     }
 
     private async Task LoadSessions()
@@ -151,26 +174,36 @@
     {
         if (selectedSession == null) return;
 
+        if (CurrentUser == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var request = new 
+        {
+            UserId = CurrentUser.Id,
+            SessionId = selectedSession.Id
+        };
+
         try 
         {
-            var authState = await AuthProvider.GetAuthenticationStateAsync();
-            var user = authState.User;
-            var userIdString = user.FindFirst(c => c.Type == ClaimTypes.NameIdentifier)?.Value;
+            var userId = CurrentUser?.Id;
 
-            if (string.IsNullOrEmpty(userIdString))
+            if (userId == null)
             {
                 errorMessage = "You must be logged in to book.";
                 StateHasChanged();
                 return;
             }
 
-            var request = new 
+            var bookingRequest = new 
             { 
-                UserId = long.Parse(userIdString),
+                UserId = userId,
                 SessionId = selectedSession.Id
             };
 
-            var response = await Http.PostAsJsonAsync("api/Bookings", booking);
+            var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
             
             if (response.IsSuccessStatusCode)
             {
