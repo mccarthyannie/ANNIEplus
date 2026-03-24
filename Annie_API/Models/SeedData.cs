@@ -1,4 +1,5 @@
-﻿using Microsoft.Build.Experimental.BuildCheck;
+﻿using Annie_API.Authorization;
+using Microsoft.Build.Experimental.BuildCheck;
 using Microsoft.EntityFrameworkCore;
 using System.Composition;
 
@@ -7,6 +8,7 @@ namespace Annie_API.Models
     public class SeedData
     {
         private readonly DataContext _context;
+        private readonly Authorizator _authorizator = new Authorizator();
         public SeedData(DataContext context)
         {
             _context = context;
@@ -21,8 +23,15 @@ namespace Annie_API.Models
         private async Task CheckUsersAsync()
         {
             if (!_context.Users.Any())
-            { 
-                _context.Users.Add(new User { Name="AnniePlus", Password = "admin", Email = "agustin.egui@gmail.com", Role = UserRole.Admin });
+            {
+                User user = new User
+                {
+                    Name = "AnniePlus",
+                    Password = _authorizator.HashPassword("admin"),
+                    Email = "agustin.egui@gmail.com",
+                    Role = UserRole.Admin
+                };
+                _context.Users.Add(user);
 
                 await _context.SaveChangesAsync();
             }
