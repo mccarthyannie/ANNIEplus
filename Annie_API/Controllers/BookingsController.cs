@@ -81,7 +81,6 @@ namespace Annie_API.Controllers
 
         // TODO : use authorize and claim to validate user and prevent booking to other users 
         // POST: api/Bookings
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<BookingDTO>> PostBooking(BookingRequest request)
         {
@@ -96,6 +95,13 @@ namespace Annie_API.Controllers
             if (user == null || session == null)
             { 
                 return BadRequest("User and Session must be provided.");
+            }
+
+            var repeats = await _context.Bookings.Select(b => b.SessionId == request.SessionId
+                                                && b.UserId == request.UserId).CountAsync();
+
+            if (repeats != 0) {
+                return BadRequest("Booking already exists. ");
             }
 
             var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
@@ -141,19 +147,6 @@ namespace Annie_API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool UserExists(long id)
-        {
-            return _context.Users.Any(e => e.Id == id);
-        }
-        private bool SessionExists(long id)
-        {
-            return _context.Sessions.Any(e => e.Id == id);
-        }
-        private bool BookingExists(long id)
-        {
-            return _context.Bookings.Any(e => e.Id == id);
         }
     }
 }

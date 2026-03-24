@@ -68,7 +68,6 @@ namespace Annie_API.Controllers
         }
 
         // PUT: api/Sessions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
         //[Authorize(Roles="Admin,Instructor")]
         public async Task<IActionResult> PutSession(long id, Session session)
@@ -100,7 +99,6 @@ namespace Annie_API.Controllers
         }
 
         // POST: api/Sessions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         //[Authorize(Roles="Admin,Instructor")]
         public async Task<ActionResult<Session>> PostSession(Session session)

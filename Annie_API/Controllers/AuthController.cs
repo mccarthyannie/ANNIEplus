@@ -24,13 +24,12 @@ namespace Annie_API.Controllers
         }
 
         // POST: api/login
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [Route("api/login")]
         [HttpPost]
         public async Task<ActionResult<UserDTO>> LoginUser(LoginRequest request)
         {
             var user = _context.Users
-                .FirstOrDefault(u => u.Email == request.Email);
+                .First(u => u.Email == request.Email);
 
             if (user == null) 
             {
@@ -50,8 +49,52 @@ namespace Annie_API.Controllers
             });
         }
 
+
         // POST: api/login
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
+        [Route("api/register/instructor")]
+        [HttpPost]
+        public async Task<ActionResult<UserDTO>> RegisterInstructor(RegisterUserRequest request)
+        {
+            if (EmailExists(request.Email))
+            {
+                return BadRequest("Email already exists");
+            }
+
+            User user = new User
+            {
+                Name = request.Name,
+                Email = request.Email,
+                Password = authorizator.HashPassword(request.Password),
+                Role = UserRole.Instructor
+            };
+
+            _context.Users.Add(user);
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException)
+            {
+                if (EmailExists(user.Email))
+                {
+                    return Conflict();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return Ok(new UserDTO
+            {
+                Id = user.Id,
+                Email = user.Email,
+                Name = user.Name,
+            });
+        }
+
+
+        // POST: api/login
         [Route("api/register")]
         [HttpPost]
         public async Task<ActionResult<UserDTO>> RegisterUser(RegisterUserRequest request)
