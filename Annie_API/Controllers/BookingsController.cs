@@ -57,7 +57,7 @@ namespace Annie_API.Controllers
                 UserId = booking.UserId,
                 UserName = booking.User.Name,
                 SessionId = booking.SessionId,
-                SessionName = booking.Session?.Name,
+                SessionName = booking.Session.Name,
                 BookingDate = booking.BookingDate
             });
         }
@@ -91,7 +91,7 @@ namespace Annie_API.Controllers
             }
             
             var session = await _context.Sessions.FindAsync(request.SessionId);
-            var user = await _context.Users.FindAsync(request.UserId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.UserEmail);
 
             if (user == null || session == null)
             { 
@@ -99,7 +99,7 @@ namespace Annie_API.Controllers
             }
 
             var repeats = await _context.Bookings.Select(b => b.SessionId == request.SessionId
-                                                && b.UserId == request.UserId).CountAsync();
+                                                && b.UserId == user.Id).CountAsync();
 
             if (repeats != 0) {
                 return BadRequest("Booking already exists. ");
@@ -115,13 +115,26 @@ namespace Annie_API.Controllers
 
             var booking = new Booking
             {
-                UserId = request.UserId,
+                UserId = user.Id,
                 SessionId = request.SessionId,
                 BookingDate = DateTime.UtcNow
             };
 
             _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException?.Message.Contains("duplicate") == true)
+                {
+                    return Conflict("A conflict in the database occurred " + ex.InnerException.Message);
+                }
+
+                return BadRequest("The booking could not be processed. Error: " + ex.Message);
+            }
+
 
             return CreatedAtAction("GetBooking", 
                                     new { id = booking.Id }, 

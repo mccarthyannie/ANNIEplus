@@ -8,7 +8,7 @@ namespace Annie_API.DTOs
         [EmailAddress]
         public string UserEmail { get; set; } = null!;
 
-        [Required]
+        [Required] 
         public long SessionId { get; set; }
     }
 }
