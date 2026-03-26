@@ -12,7 +12,7 @@ namespace Annie_API.Models
         public long Id { get; set; }
         [ForeignKey(nameof(User))]
         [Required]
-        public long UserId { get; set; }
+        public string UserId { get; set; }
         public User User { get; set; }
         [ForeignKey(nameof(Session))]
         [Required]

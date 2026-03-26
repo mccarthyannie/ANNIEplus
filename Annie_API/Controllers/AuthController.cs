@@ -8,6 +8,12 @@ using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
 using Annie_API.DTOs;
 using Annie_API.Authorization;
+using Annie_API.Data;
+using Annie_API.UnitsOfWork.Interfaces;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
+using System.IdentityModel.Tokens.Jwt;
 
 namespace Annie_API.Controllers
 {
@@ -15,131 +21,128 @@ namespace Annie_API.Controllers
     [ApiController]
     public class AuthController : ControllerBase
     {
-        private readonly DataContext _context;
-        private readonly Authorizator authorizator = new Authorizator();
+        private readonly IUsersUnitOfWork _usersUnitOfWork;
+        private readonly IConfiguration _configuration;
 
-        public AuthController(DataContext context)
+        public AuthController(IUsersUnitOfWork usersUnitOfWork, IConfiguration configuration)
         {
-            _context = context;
+            _usersUnitOfWork = usersUnitOfWork;
+            _configuration = configuration;
         }
 
         // POST: api/login
         [Route("api/login")]
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> LoginUser(LoginRequest request)
+        public async Task<ActionResult<TokenDTO>> LoginUser([FromBody] LoginRequest request)
         {
-            var user = _context.Users
-                .First(u => u.Email == request.Email);
+            var result = await _usersUnitOfWork.LoginAsync(request);
 
-            if (user == null) 
+            if (!result.Succeeded) 
             {
-                return Unauthorized("Invalid Email");
+                return BadRequest("Email or Password are wrong.");
             }
 
-            if (!authorizator.VerifyPassword(request.Password, user.Password))
-            {
-                return Unauthorized("Invalid Password");
-            }
-
-            return Ok(new UserDTO 
-            { 
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-            });
+            var user = await _usersUnitOfWork.GetUserAsync(request.Email);
+    
+            return Ok(BuildToken(user));
         }
 
 
+        // Create new User type
         // POST: api/login
+        [Route("api/register")]
+        [HttpPost]
+        public async Task<ActionResult<TokenDTO>> RegisterUser(RegisterUserRequest request)
+        {
+            if (await EmailExists(request.Email))
+            {
+                return BadRequest("Email already exists.");
+            }
+
+            User user = new()
+            {
+                Name = request.Name,
+                Email = request.Email,
+                Role = UserRole.User,
+                UserName = request.Email
+            };
+
+            var result = await _usersUnitOfWork.AddUserAsync(user, request.Password);
+
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors.Select(e => e.Description));
+            }
+
+            await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.User).ToString());
+
+            return Ok(BuildToken(user));
+        }
+
+
+        // Create new Instructor user
+        // POST: api/login/instructor
         [Route("api/register/instructor")]
         [HttpPost]
         public async Task<ActionResult<UserDTO>> RegisterInstructor(RegisterUserRequest request)
         {
-            if (EmailExists(request.Email))
+            if (await EmailExists(request.Email))
             {
-                return BadRequest("Email already exists");
+                return BadRequest("Email already exists.");
             }
 
-            User user = new User
+            User user = new()
             {
                 Name = request.Name,
                 Email = request.Email,
-                Password = authorizator.HashPassword(request.Password),
-                Role = UserRole.Instructor
+                Role = UserRole.User,
+                UserName = request.Email
             };
 
-            _context.Users.Add(user);
-            try
+            var result = await _usersUnitOfWork.AddUserAsync(user, request.Password);
+
+
+            if (!result.Succeeded)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EmailExists(user.Email))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
+                return BadRequest(result.Errors.Select(e => e.Description));
             }
 
-            return Ok(new UserDTO
-            {
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-            });
+            await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.Instructor).ToString());
+
+            return Ok(BuildToken(user));
         }
 
-
-        // POST: api/login
-        [Route("api/register")]
-        [HttpPost]
-        public async Task<ActionResult<UserDTO>> RegisterUser(RegisterUserRequest request)
+        private TokenDTO BuildToken(User user)
         {
-            if (EmailExists(request.Email))
+            var claims = new List<Claim>
             {
-                return BadRequest("Email already exists");
-            }
-
-            User user = new User
-            {
-                Name = request.Name,
-                Email = request.Email,
-                Password = authorizator.HashPassword(request.Password),
-                Role = UserRole.User
+                new(ClaimTypes.Email, user.Email!),
+                new(ClaimTypes.Role, user.Role.ToString()),
+                new("Name", user.Name)
             };
 
-            _context.Users.Add(user);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (EmailExists(user.Email))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["jwtkey"]!));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var expiration = DateTime.UtcNow.AddDays(7);
+            var token = new JwtSecurityToken(
+                issuer: null,
+                audience: null,
+                claims: claims,
+                expires: expiration,
+                signingCredentials: creds
+                );
 
-            return Ok(new UserDTO
+            return new TokenDTO
             {
-                Id = user.Id,
-                Email = user.Email,
-                Name = user.Name,
-            });
+                Token = new JwtSecurityTokenHandler().WriteToken(token),
+                Expiration = expiration
+            };
         }
 
-        private bool EmailExists(string email)
+        private async Task<bool> EmailExists(string email)
         {
-            return _context.Users.Any(e => e.Email == email);
+            return (await _usersUnitOfWork.GetUserAsync(email)) != null;
         }
     }
 }

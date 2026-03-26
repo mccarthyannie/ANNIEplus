@@ -1,8 +1,14 @@
-﻿namespace Annie_API.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Annie_API.DTOs
 {
     public class BookingRequest
     {
-        public long UserId { get; set; }
+        [Required]
+        [EmailAddress]
+        public string UserEmail { get; set; } = null!;
+
+        [Required]
         public long SessionId { get; set; }
     }
 }

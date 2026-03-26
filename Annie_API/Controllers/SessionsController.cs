@@ -9,6 +9,8 @@ using Annie_API.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Annie_API.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Annie_API.Controllers
 {
@@ -69,7 +71,7 @@ namespace Annie_API.Controllers
 
         // PUT: api/Sessions/5
         [HttpPut("{id}")]
-        //[Authorize(Roles="Admin,Instructor")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> PutSession(long id, Session session)
         {
             if (id != session.Id)
@@ -100,7 +102,7 @@ namespace Annie_API.Controllers
 
         // POST: api/Sessions
         [HttpPost]
-        //[Authorize(Roles="Admin,Instructor")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<ActionResult<Session>> PostSession(Session session)
         {
             _context.Sessions.Add(session);
@@ -111,7 +113,7 @@ namespace Annie_API.Controllers
 
         // DELETE: api/Sessions/5
         [HttpDelete("{id}")]
-        //[Authorize(Roles="Admin,Instructor")]
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         public async Task<IActionResult> DeleteSession(long id)
         {
             var session = await _context.Sessions.FindAsync(id);

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
 using Annie_API.DTOs;
+using Annie_API.Data;
 
 namespace Annie_API.Controllers
 {
@@ -64,7 +65,7 @@ namespace Annie_API.Controllers
         // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
         [HttpGet("User/{id}")]
-        public async Task<ActionResult<List<Session>>> GetBookingByUser(long id)
+        public async Task<ActionResult<List<Session>>> GetBookingByUser(string id)
         {
             return await _context.Bookings.Where(u => u.UserId == id).Select(u => u.Session).ToListAsync();
         }

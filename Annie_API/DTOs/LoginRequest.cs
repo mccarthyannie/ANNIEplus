@@ -1,8 +1,16 @@
-﻿namespace Annie_API.DTOs
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace Annie_API.DTOs
 {
     public class LoginRequest
     {
-        public string Email { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        [Required]
+        [EmailAddress(ErrorMessage ="You must enter a valid e-mail.")]
+        public string Email { get; set; } = null!;
+
+        [Required]
+        [DataType(DataType.Password)]
+        [MinLength(6, ErrorMessage ="Password is not long enough.")]
+        public string Password { get; set; } = null!;
     }
 }

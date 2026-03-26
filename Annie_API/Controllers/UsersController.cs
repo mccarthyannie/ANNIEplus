@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
 using Annie_API.Authorization;
 using Annie_API.DTOs;
+using Annie_API.Data;
 
 namespace Annie_API.Controllers
 {
@@ -77,7 +78,7 @@ namespace Annie_API.Controllers
 
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(long id, User user)
+        public async Task<IActionResult> PutUser(string id, User user)
         {
             if (id != user.Id)
             {
@@ -109,7 +110,7 @@ namespace Annie_API.Controllers
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            user.Password = _authorizator.HashPassword(user.Password);
+            user.PasswordHash = _authorizator.HashPassword(user.PasswordHash);
 
             _context.Users.Add(user);
             try
@@ -150,7 +151,7 @@ namespace Annie_API.Controllers
             return NoContent();
         }
 
-        private bool UserExists(long id)
+        private bool UserExists(string id)
         {
             return _context.Users.Any(e => e.Id == id);
         }
