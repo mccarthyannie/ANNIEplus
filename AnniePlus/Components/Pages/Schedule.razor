@@ -112,6 +112,24 @@
     private ClaimsPrincipal? claimsPrincipal;
 
 
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        await LoadSessions();
+    }
+
+
     private async Task GoToNextWeek()
     {
         currentStartDate = currentStartDate.AddDays(7);
@@ -131,11 +149,6 @@
         showPopup = true;
     }
     private void ClosePopup() => showPopup = false;
-
-    protected override async Task OnInitializedAsync()
-    {   
-        await LoadSessions();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -182,7 +195,7 @@
         if (authState == null) return;
 
         claimsPrincipal = authState.User;
-        
+
         if (selectedSession == null) return;
 
         if (claimsPrincipal == null)
@@ -211,12 +224,10 @@
 
             var bookingRequest = new 
             { 
-                UserEmail = email,
                 SessionId = selectedSession.Id
             };
 
             var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
-            
             if (response.IsSuccessStatusCode)
             {
                 showPopup = false;

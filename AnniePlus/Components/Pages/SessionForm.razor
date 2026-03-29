@@ -1,6 +1,8 @@
 @page "/create-session"
+@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
+@using System.Security.Claims
 @inject HttpClient Http
 @inject NavigationManager Nav
 
@@ -78,7 +80,9 @@
 }
 
 @code {
-    
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
     [SupplyParameterFromForm]
     private Session session { get; set; } = new Session 
     { 
@@ -92,7 +96,36 @@
     private bool submitted = false;
     private string? errorMessage;
     private DateTime date = DateTime.Today;
-    
+
+    private ClaimsPrincipal? claimsPrincipal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        var role = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
+        if (String.IsNullOrEmpty(role))
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+        else if (role != "Admin" && role != "Instructor")
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+    }
+
+
     private async Task HandleSubmit()
     {
         session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);

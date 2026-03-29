@@ -7,6 +7,7 @@
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
 @using Annie_API.DTOs
+@using System.Security.Claims
 
 @inject HttpClient Http
 @inject NavigationManager Nav
@@ -45,14 +46,24 @@
 
 @code 
 {
-    public static TokenDTO? CurrentUser { get; private set; }
-    public static bool IsLoggedIn => CurrentUser != null;
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private ClaimsPrincipal? claimsPrincipal;
     private LoginRequest request = new();
     private string? errorMessage;
 
     protected override async Task OnInitializedAsync()
     {
-        Console.WriteLine("Check if User is signed in!!!!");
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() != 0)
+        {
+            Nav.NavigateTo("/");
+        }
     }
 
     private async Task HandleLogin()

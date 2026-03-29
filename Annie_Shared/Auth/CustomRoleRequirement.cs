@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 
-namespace AnniePlus.AuthenticationProviders
+namespace Annie_Shared.Auth
 {
     public class CustomRoleRequirement : IAuthorizationRequirement
     {

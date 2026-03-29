@@ -1,6 +1,8 @@
 using AnniePlus.AuthenticationProviders;
 using AnniePlus.Components;
 using AnniePlus.Services;
+using Annie_Shared.Auth;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;

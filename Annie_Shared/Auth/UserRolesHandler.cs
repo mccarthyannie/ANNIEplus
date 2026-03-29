@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 
-namespace AnniePlus.AuthenticationProviders
+namespace Annie_Shared.Auth
 {
     public class UserRolesHandler : AuthorizationHandler<CustomRoleRequirement>
     {
@@ -9,7 +9,7 @@ namespace AnniePlus.AuthenticationProviders
         {
             var role = context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role)?.Value;
 
-            if (String.IsNullOrEmpty(role)) 
+            if (String.IsNullOrEmpty(role))
             {
                 return Task.CompletedTask;
             }

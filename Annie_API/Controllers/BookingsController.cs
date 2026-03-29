@@ -28,7 +28,8 @@ namespace Annie_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingDTO>>> GetBookings()
         {
-            return await _context.Bookings.Select(b => new BookingDTO 
+            return await _context.Bookings.Select(b => 
+                                                        new BookingDTO 
                                                             { Id = b.Id,
                                                                 Email = b.User.Email,
                                                                 SessionId = b.SessionId,
@@ -81,7 +82,7 @@ namespace Annie_API.Controllers
         // Returns the users that booked the session
         // GET: api/Bookings/Session/5
         [HttpGet("Session/{id}")]
-        [Authorize(Roles ="Admin, Instructor")]
+        [Authorize(Policy = "CanChangeSessions")]
         public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
@@ -91,30 +92,39 @@ namespace Annie_API.Controllers
                                                                                                 .ToListAsync();
         }
 
-        // TODO : use authorize and claim to validate user and prevent booking to other users 
         // POST: api/Bookings
         [HttpPost]
-        [Authorize(Roles = "Admin, Instructor")]
+        [Authorize(Policy = "AnyValidUser")]
         public async Task<ActionResult<BookingDTO>> PostBooking(BookingRequest request)
         {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email))
+            {
+                return Forbid();
+            }
+
+
             if (request == null)
             {
                 return BadRequest();
             }
             
             var session = await _context.Sessions.FindAsync(request.SessionId);
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.UserEmail);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
 
             if (user == null || session == null)
             { 
                 return BadRequest("User and Session must be provided.");
             }
 
-            var repeats = await _context.Bookings.Select(b => b.SessionId == request.SessionId
-                                                && b.UserId == user.Id).CountAsync();
+            var repeats = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId
+                                                && b.UserId == user.Id);
 
             if (repeats != 0) {
                 return BadRequest("Booking already exists. ");
+               
             }
 
             var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);

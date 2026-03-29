@@ -23,6 +23,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Annie_API\Annie_API.csproj" />
+    <ProjectReference Include="..\Annie_Shared\Annie_Shared.csproj" />
   </ItemGroup>
 
 </Project>
