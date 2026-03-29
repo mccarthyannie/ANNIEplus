@@ -12,12 +12,12 @@ namespace Annie_API.Models
         public long Id { get; set; }
         [ForeignKey(nameof(User))]
         [Required]
-        public long UserId { get; set; }
-        public User User { get; set; }
+        public string UserId { get; set; } = null!;
+        public User? User { get; set; }
         [ForeignKey(nameof(Session))]
         [Required]
         public long SessionId { get; set; }
-        public Session Session { get; set; }
+        public Session? Session { get; set; }
         [Required]
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
     }

@@ -9,6 +9,8 @@ using Annie_API.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.Authorization;
+using Annie_API.Data;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace Annie_API.Controllers
 {
@@ -68,10 +70,9 @@ namespace Annie_API.Controllers
         }
 
         // PUT: api/Sessions/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        //[Authorize(Roles="Admin,Instructor")]
-        public async Task<IActionResult> PutSession(long id, Session session)
+        [Authorize(Policy = "CanChangeSessions")]
+        public async Task<ActionResult<Session>> PutSession(long id, Session session)
         {
             if (id != session.Id)
             {
@@ -96,24 +97,31 @@ namespace Annie_API.Controllers
                 }
             }
 
-            return NoContent();
+            return CreatedAtAction(nameof(GetSession), new { id = session.Id }, session);
         }
 
         // POST: api/Sessions
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
-        //[Authorize(Roles="Admin,Instructor")]
+        [Authorize(Policy = "CanChangeSessions")]
         public async Task<ActionResult<Session>> PostSession(Session session)
         {
             _context.Sessions.Add(session);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest($"Database Exception with message: {ex.Message}");
+            }
+
 
             return CreatedAtAction(nameof(GetSession), new { id = session.Id }, session);
         }
 
         // DELETE: api/Sessions/5
         [HttpDelete("{id}")]
-        //[Authorize(Roles="Admin,Instructor")]
+        [Authorize(Policy = "CanChangeSessions")]
         public async Task<IActionResult> DeleteSession(long id)
         {
             var session = await _context.Sessions.FindAsync(id);

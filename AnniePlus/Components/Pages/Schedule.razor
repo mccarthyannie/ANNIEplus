@@ -98,6 +98,9 @@
 
 @code 
 {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
     private Booking booking = new();
     private DateTime currentStartDate = DateTime.Today;
     private bool showPopup = false;
@@ -105,7 +108,27 @@
     private Session? selectedSession;
     private string? errorMessage;
     private List<Session> sessions = new();
-    public static UserDTO? CurrentUser;
+
+    private ClaimsPrincipal? claimsPrincipal;
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        await LoadSessions();
+    }
+
 
     private async Task GoToNextWeek()
     {
@@ -127,20 +150,16 @@
     }
     private void ClosePopup() => showPopup = false;
 
-    protected override async Task OnInitializedAsync()
-    {   
-        await LoadSessions();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
+
             var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
-        
+
             if (json != null)
             {
-                CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
+                var token = System.Text.Json.JsonSerializer.Deserialize<TokenDTO>(json);
             }
             else
             {
@@ -155,10 +174,10 @@
         try 
         {
             var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
-            
+
             var result = await Http.GetFromJsonAsync<List<Session>>(url);
             sessions = result ?? new List<Session>();
-            
+
             StateHasChanged(); 
         }
         catch (Exception ex)
@@ -172,39 +191,43 @@
 
     private async Task HandleBooking()
     {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
         if (selectedSession == null) return;
 
-        if (CurrentUser == null)
+        if (claimsPrincipal == null)
         {
             Nav.NavigateTo("/login");
             return;
         }
 
-        var request = new 
-        {
-            UserId = CurrentUser.Id,
-            SessionId = selectedSession.Id
-        };
-
         try 
         {
-            var userId = CurrentUser?.Id;
-
-            if (userId == null)
+            if (claimsPrincipal.Claims.Count() == 0)
             {
-                errorMessage = "You must be logged in to book.";
+                Nav.NavigateTo("/login");
+                StateHasChanged();
+                return;
+            }
+
+            var email = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                Nav.NavigateTo("/login");
                 StateHasChanged();
                 return;
             }
 
             var bookingRequest = new 
             { 
-                UserId = userId,
                 SessionId = selectedSession.Id
             };
 
             var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
-            
             if (response.IsSuccessStatusCode)
             {
                 showPopup = false;

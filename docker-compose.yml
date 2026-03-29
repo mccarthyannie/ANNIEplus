@@ -20,7 +20,9 @@ services:
       depends_on:
         database:
           condition: service_healthy
-      build: ./Annie_API/.
+      build: 
+        context: .
+        dockerfile: Annie_API/Dockerfile
       ports:
         - "7000:8080"
       env_file:
@@ -29,6 +31,9 @@ services:
         - ConnectionStrings__DefaultConnection=Host=database;Database=${POSTGRES_DB};Username=${POSTGRES_USER};Password=${POSTGRES_PASSWORD}
         - ASPNETCORE_URLS=http://+:8080
         - ASPNETCORE_HTTPS_PORT=0
+        - ASPNETCORE_ENVIRONMENT=Development
+
+
 volumes:
   annie_vol:
     external: false

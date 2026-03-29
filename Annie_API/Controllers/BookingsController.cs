@@ -7,6 +7,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
 using Annie_API.DTOs;
+using Annie_API.Data;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Annie_API.Controllers
 {
@@ -25,10 +28,10 @@ namespace Annie_API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BookingDTO>>> GetBookings()
         {
-            return await _context.Bookings.Select(b => new BookingDTO 
+            return await _context.Bookings.Select(b => 
+                                                        new BookingDTO 
                                                             { Id = b.Id,
-                                                                UserId = b.UserId,
-                                                                UserName = b.User.Name,
+                                                                Email = b.User.Email,
                                                                 SessionId = b.SessionId,
                                                                 SessionName = b.Session.Name,
                                                                 BookingDate = b.BookingDate})
@@ -53,75 +56,115 @@ namespace Annie_API.Controllers
             return Ok(new BookingDTO
             {
                 Id = booking.Id,
-                UserId = booking.UserId,
-                UserName = booking.User.Name,
+                Email = booking.User.Email,
                 SessionId = booking.SessionId,
-                SessionName = booking.Session?.Name,
+                SessionName = booking.Session.Name,
                 BookingDate = booking.BookingDate
             });
         }
 
         // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
-        [HttpGet("User/{id}")]
-        public async Task<ActionResult<List<Session>>> GetBookingByUser(long id)
+        [HttpGet("User")]
+        [Authorize]
+        public async Task<ActionResult<List<Session>>> GetBookingByUser()
         {
-            return await _context.Bookings.Where(u => u.UserId == id).Select(u => u.Session).ToListAsync();
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email)) 
+            {
+                return Forbid();
+            }
+
+            return await _context.Bookings.Where(u => u.User.Email == email).Select(u => u.Session).ToListAsync();
         }
 
         // Returns the users that booked the session
         // GET: api/Bookings/Session/5
         [HttpGet("Session/{id}")]
+        [Authorize(Policy = "CanChangeSessions")]
         public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
-                                                                                            { Id = b.User.Id,                                                                                Role = b.User.Role})
-                                                                                            .ToListAsync();
+                                                                                            {Name = b.User.Name,
+                                                                                                Email = b.User.Id,                                                                                
+                                                                                                Role = b.User.Role}) 
+                                                                                                .ToListAsync();
         }
 
-        // TODO : use authorize and claim to validate user and prevent booking to other users 
         // POST: api/Bookings
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
+        [Authorize(Policy = "AnyValidUser")]
         public async Task<ActionResult<BookingDTO>> PostBooking(BookingRequest request)
         {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email))
+            {
+                return Forbid();
+            }
+
+
             if (request == null)
             {
                 return BadRequest();
             }
             
             var session = await _context.Sessions.FindAsync(request.SessionId);
-            var user = await _context.Users.FindAsync(request.UserId);
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+
 
             if (user == null || session == null)
             { 
                 return BadRequest("User and Session must be provided.");
             }
 
+            var repeats = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId
+                                                && b.UserId == user.Id);
+
+            if (repeats != 0) {
+                return BadRequest("Booking already exists. ");
+               
+            }
+
             var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
-            if (count >= session.Capacity) { 
+            if (count >= session.Capacity)
+            {
                 return BadRequest("Session is fully booked.");
             }
-            if (session.StartTime <= DateTime.UtcNow) { 
+            if (session.StartTime <= DateTime.UtcNow)
+            {
                 return BadRequest("Session has already started.");
             }
 
             var booking = new Booking
             {
-                UserId = request.UserId,
+                UserId = user.Id,
                 SessionId = request.SessionId,
                 BookingDate = DateTime.UtcNow
             };
 
             _context.Bookings.Add(booking);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                if (ex.InnerException?.Message.Contains("duplicate") == true)
+                {
+                    return Conflict("A conflict in the database occurred " + ex.InnerException.Message);
+                }
+
+                return BadRequest("The booking could not be processed. Error: " + ex.Message);
+            }
+
 
             return CreatedAtAction("GetBooking", 
                                     new { id = booking.Id }, 
                                     new BookingDTO { 
                                         Id = booking.Id,
-                                        UserId = booking.UserId,
-                                        UserName = user.Name,
+                                        Email = user.Email,
                                         SessionId = booking.SessionId,
                                         SessionName = session.Name,
                                         BookingDate = booking.BookingDate});
@@ -129,31 +172,31 @@ namespace Annie_API.Controllers
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteBooking(long id)
         {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email))
+            {
+                return Forbid();
+            }
+            
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
             {
                 return NotFound();
             }
 
+            if (booking.User.Email != email) 
+            {
+                return Forbid();
+            }
+
             _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        private bool UserExists(long id)
-        {
-            return _context.Users.Any(e => e.Id == id);
-        }
-        private bool SessionExists(long id)
-        {
-            return _context.Sessions.Any(e => e.Id == id);
-        }
-        private bool BookingExists(long id)
-        {
-            return _context.Bookings.Any(e => e.Id == id);
         }
     }
 }

@@ -8,7 +8,7 @@ namespace Annie_API.Models;
 public class Session
 {
     public long Id { get; set; }
-    public string? Name { get; set; }
+    public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
     public required DateTime StartTime { get; set; }
     public DateTime EndTime { get; set; } = DateTime.MinValue;

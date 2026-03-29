@@ -1,8 +1,20 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @using Syncfusion.Blazor.Navigations
+@using System.Security.Claims
 
 <PageTitle>Home</PageTitle>
 
 <h1>Annie+</h1>
-<a href="/login">Log in</a>
-<a href="/register">Sign up</a>
+<AuthorizeView>
+	<Authorized>
+		<span>Hello @context.User.Identity.Name<br></span>
+        <span>You are a(n) @context.User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Role).Value</span>
+        <a href="/logout" class="nav-link btn btn-link">Log out</a>
+	</Authorized>
+	<NotAuthorized>
+		<a href="/login" class="nav-link btn btn-link">Log in</a>
+		<a href="/register" class="nav-link btn btn-link">Sign up</a>
+	</NotAuthorized>
+</AuthorizeView>
