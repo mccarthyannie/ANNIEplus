@@ -4,16 +4,15 @@ using Annie_API.Repositories.Implementations;
 using Annie_API.Repositories.Interfaces;
 using Annie_API.UnitsOfWork.Implementations;
 using Annie_API.UnitsOfWork.Interfaces;
-
 using Annie_Shared.Auth;
-
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using Microsoft.OpenApi;
+using System.Text;
 
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
 
@@ -24,45 +23,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-builder.Services.AddOpenApi(options =>
+builder.Services.AddSwaggerGen(options =>
 {
-    options.AddDocumentTransformer((document, context, cancellationToken) =>
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
     {
-        document.Info.Title = "Orders Backend";
-        document.Info.Version = "v1";
-
-        // Define the Bearer Security Scheme
-        var scheme = new OpenApiSecurityScheme
-        {
-            Type = SecuritySchemeType.Http,
-            Name = "Authorization",
-            In = ParameterLocation.Header,
-            Scheme = "bearer",
-            BearerFormat = "JWT",
-            Description = "Enter your JWT token directly (no 'Bearer' prefix needed here)"
-        };
-
-        document.Components ??= new OpenApiComponents();
-        document.Components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
-        document.Components.SecuritySchemes.Add("Bearer", scheme);
-
-        // Apply the security requirement globally
-        document.Security = [
-            new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecuritySchemeReference("Bearer"),
-                    []
-                }
-            }
-        ];
-
-        return Task.CompletedTask;
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = []
     });
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 builder.Services.AddDbContext<DataContext>(opt =>
     opt.UseNpgsql(
         builder.Configuration.GetConnectionString("DefaultConnection"),
@@ -108,6 +83,27 @@ builder.Services.AddAuthentication(options =>
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["jwtKey"]!)),
             ClockSkew = TimeSpan.Zero // Disable clock skew to ensure tokens are valid immediately        
         };
+
+        // Used to check that swagger was sending the correct authorization header
+        /*x.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = ctx =>
+            {
+                Console.WriteLine($"[JwtEvents] OnMessageReceived. Authorization header: '{ctx.Request.Headers["Authorization"]}'");
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = ctx =>
+            {
+                var claims = string.Join(", ", ctx.Principal?.Claims.Select(c => $"{c.Type}={c.Value}") ?? Array.Empty<string>());
+                Console.WriteLine($"[JwtEvents] OnTokenValidated. Claims: {claims}");
+                return Task.CompletedTask;
+            },
+            OnAuthenticationFailed = ctx =>
+            {
+                Console.WriteLine("[JwtEvents] OnAuthenticationFailed. Exception: " + ctx.Exception?.ToString());
+                return Task.CompletedTask;
+            }
+        };*/
     });
 
 builder.Services.AddAuthorization(config =>
@@ -134,18 +130,13 @@ async Task SeedDb(WebApplication app) {
     }
 }
 
-// Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/openapi/v1.json", "v1");
-        options.OAuthUsePkce();
-    });
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
-//app.UseHttpsRedirection();
 app.Use(async (context, next) =>
 {
     var authHeader = context.Request.Headers["Authorization"].ToString();
