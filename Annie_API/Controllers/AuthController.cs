@@ -85,7 +85,7 @@ namespace Annie_API.Controllers
         // POST: api/login/instructor
         [Route("api/register/instructor")]
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> RegisterInstructor(RegisterUserRequest request)
+        public async Task<ActionResult<TokenDTO>> RegisterInstructor(RegisterUserRequest request)
         {
             if (await EmailExists(request.Email))
             {

@@ -28,8 +28,7 @@ namespace Annie_API.Controllers
         {
             return await _context.Bookings.Select(b => new BookingDTO 
                                                             { Id = b.Id,
-                                                                UserId = b.UserId,
-                                                                UserName = b.User.Name,
+                                                                Email = b.User.Email,
                                                                 SessionId = b.SessionId,
                                                                 SessionName = b.Session.Name,
                                                                 BookingDate = b.BookingDate})
@@ -54,8 +53,7 @@ namespace Annie_API.Controllers
             return Ok(new BookingDTO
             {
                 Id = booking.Id,
-                UserId = booking.UserId,
-                UserName = booking.User.Name,
+                Email = booking.User.Email,
                 SessionId = booking.SessionId,
                 SessionName = booking.Session.Name,
                 BookingDate = booking.BookingDate
@@ -76,8 +74,10 @@ namespace Annie_API.Controllers
         public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
-                                                                                            { Id = b.User.Id,                                                                                Role = b.User.Role})
-                                                                                            .ToListAsync();
+                                                                                            {Name = b.User.Name,
+                                                                                                Email = b.User.Id,                                                                                
+                                                                                                Role = b.User.Role}) 
+                                                                                                .ToListAsync();
         }
 
         // TODO : use authorize and claim to validate user and prevent booking to other users 
@@ -106,10 +106,12 @@ namespace Annie_API.Controllers
             }
 
             var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
-            if (count >= session.Capacity) { 
+            if (count >= session.Capacity)
+            {
                 return BadRequest("Session is fully booked.");
             }
-            if (session.StartTime <= DateTime.UtcNow) { 
+            if (session.StartTime <= DateTime.UtcNow)
+            {
                 return BadRequest("Session has already started.");
             }
 
@@ -140,8 +142,7 @@ namespace Annie_API.Controllers
                                     new { id = booking.Id }, 
                                     new BookingDTO { 
                                         Id = booking.Id,
-                                        UserId = booking.UserId,
-                                        UserName = user.Name,
+                                        Email = user.Email,
                                         SessionId = booking.SessionId,
                                         SessionName = session.Name,
                                         BookingDate = booking.BookingDate});

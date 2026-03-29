@@ -25,13 +25,20 @@ namespace AnniePlus.AuthenticationProviders
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            var token = await _js.GetLocalStorage(_tokenKey);
-            if (token == null)
+            try
             {
-                return _anonimous;
-            }
+                var token = await _js.GetLocalStorage(_tokenKey);
+                if (String.IsNullOrEmpty(token))
+                {
+                    return _anonimous;
+                }
 
-            return BuildAuthenticationState(token.ToString()!);
+                return BuildAuthenticationState(token.ToString());
+            }
+            catch (Exception)
+            {
+                return _anonimous; 
+            }
         }
 
         public async Task LoginAsync(string token)
@@ -43,7 +50,14 @@ namespace AnniePlus.AuthenticationProviders
 
         public async Task LogoutAsync()
         {
-            await _js.RemoveLocalStorage(_tokenKey);
+            try
+            {
+                await _js.RemoveLocalStorage(_tokenKey);
+            }
+            catch (InvalidCastException) { 
+                
+            }
+            
             _httpClient.DefaultRequestHeaders.Authorization = null;
             NotifyAuthenticationStateChanged(Task.FromResult(_anonimous));
         }
@@ -52,7 +66,8 @@ namespace AnniePlus.AuthenticationProviders
         {
             _httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             var claims = ParseClaimsFromJWT(token);
-            return new AuthenticationState(new ClaimsPrincipal(new ClaimsIdentity(claims)));
+            var identity = new ClaimsIdentity(claims, "jwt", "name", "role");
+            return new AuthenticationState(new ClaimsPrincipal(identity));
         }
 
         private IEnumerable<Claim> ParseClaimsFromJWT(string token)

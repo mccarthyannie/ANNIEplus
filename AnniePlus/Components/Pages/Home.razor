@@ -1,8 +1,18 @@
 ﻿@page "/"
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
 @using Syncfusion.Blazor.Navigations
 
 <PageTitle>Home</PageTitle>
 
 <h1>Annie+</h1>
-<a href="/login">Log in</a>
-<a href="/register">Sign up</a>
+<AuthorizeView>
+	<Authorized>
+		<span>Hello @context.User.Identity.Name</span>
+		<a href="/logout" class="nav-link btn btn-link">Log out</a>
+	</Authorized>
+	<NotAuthorized>
+		<a href="/login" class="nav-link btn btn-link">Log in</a>
+		<a href="/register" class="nav-link btn btn-link">Sign up</a>
+	</NotAuthorized>
+</AuthorizeView>

@@ -34,7 +34,6 @@ namespace Annie_API.Controllers
             return await _context.Users
                 .Select(u => new UserDTO
             {
-                Id = u.Id,
                 Name = u.Name,
                 Email = u.Email,
                 Role = u.Role
@@ -49,7 +48,6 @@ namespace Annie_API.Controllers
                 .Where(u => u.Role == UserRole.Instructor)
                 .Select( u => new UserDTO
                 {
-                    Id = u.Id,
                     Name = u.Name,
                     Email = u.Email,
                     Role = u.Role
@@ -69,7 +67,6 @@ namespace Annie_API.Controllers
 
             return new UserDTO
             {
-                Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 Role = user.Role
@@ -129,10 +126,16 @@ namespace Annie_API.Controllers
                 }
             }
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO 
-                                                                        { Id = user.Id,
-                                                                          Name = user.Name,
-                                                                          Email = user.Email});
+            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO
+            {
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
+            });
+
+
+
+
         }
 
         // DELETE: api/Users/5

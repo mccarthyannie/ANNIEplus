@@ -14,6 +14,8 @@ builder.Services.AddSingleton(sp => new HttpClient
     BaseAddress = new Uri("http://localhost:7000/")
 });
 
+builder.Services.AddAuthenticationCore();
+builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationProvider>();
 builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProvider>(a => a.GetRequiredService<AuthenticationProvider>());
 builder.Services.AddScoped<ILoginService, AuthenticationProvider>(a => a.GetRequiredService<AuthenticationProvider>());

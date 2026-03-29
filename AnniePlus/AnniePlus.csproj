@@ -25,9 +25,4 @@
     <ProjectReference Include="..\Annie_API\Annie_API.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="AuthenticationProviders\" />
-    <Folder Include="NewFolder\" />
-  </ItemGroup>
-
 </Project>

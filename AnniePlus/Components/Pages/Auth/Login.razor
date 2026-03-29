@@ -1,0 +1,77 @@
+@page "/login"
+
+@rendermode InteractiveServer
+
+@using AnniePlus.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@using Annie_API.DTOs
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject ILoginService LoginService
+
+
+<h3>Login</h3>
+
+<EditForm Model="request" OnValidSubmit="@HandleLogin" FormName="LoginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText class="form-control" @bind-Value="request.Email"/>
+        <ValidationMessage For="@(() => request.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Password:</label>
+        <InputText type="password" class="form-control" @bind-Value="request.Password"/>
+        <ValidationMessage For="@(() => request.Password)" />
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Log in</button>
+
+</EditForm>
+
+
+@code 
+{
+    public static TokenDTO? CurrentUser { get; private set; }
+    public static bool IsLoggedIn => CurrentUser != null;
+    private LoginRequest request = new();
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        Console.WriteLine("Check if User is signed in!!!!");
+    }
+
+    private async Task HandleLogin()
+    {
+        var response = await Http.PostAsJsonAsync("api/login", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var token = await response.Content.ReadFromJsonAsync<TokenDTO>();
+            if (token != null)
+            {
+                await LoginService.LoginAsync(token.Token);
+                Nav.NavigateTo("/schedule");
+            }
+            else errorMessage = "Error Registering User";
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}
