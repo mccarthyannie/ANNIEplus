@@ -1,4 +1,5 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">AnniePlus</a>
     </div>
@@ -6,25 +7,33 @@
 
 <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
 
-<div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="create-session">
-                <span class="bi bi-calendar-plus-fill-nav-menu" aria-hidden="true"></span> Add Session
-            </NavLink>
-        </div>
+        <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+            <nav class="nav flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                    </NavLink>
+                 </div>
+                
+                <AuthorizeView Policy="CanChangeSessions">
+                    <Authorized>
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="create-session">
+                            <span class="bi bi-calendar-plus-fill-nav-menu" aria-hidden="true"></span> Add Session
+                        </NavLink>
+                    </div>
+                    </Authorized>
+                </AuthorizeView>
+    
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="schedule">
+                        <span class="bi bi-calendar-plus-fill-nav-menu" aria-hidden="true"></span> See Schedule
+                    </NavLink>
+                </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="schedule">
-                <span class="bi bi-calendar-plus-fill-nav-menu" aria-hidden="true"></span> See Schedule
-            </NavLink>
+            </nav>
         </div>
-    </nav>
-</div>
+        
+    
 

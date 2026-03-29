@@ -8,6 +8,8 @@ using Microsoft.EntityFrameworkCore;
 using Annie_API.Models;
 using Annie_API.DTOs;
 using Annie_API.Data;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Annie_API.Controllers
 {
@@ -62,15 +64,24 @@ namespace Annie_API.Controllers
 
         // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
-        [HttpGet("User/{id}")]
-        public async Task<ActionResult<List<Session>>> GetBookingByUser(string id)
+        [HttpGet("User")]
+        [Authorize]
+        public async Task<ActionResult<List<Session>>> GetBookingByUser()
         {
-            return await _context.Bookings.Where(u => u.UserId == id).Select(u => u.Session).ToListAsync();
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email)) 
+            {
+                return Forbid();
+            }
+
+            return await _context.Bookings.Where(u => u.User.Email == email).Select(u => u.Session).ToListAsync();
         }
 
         // Returns the users that booked the session
         // GET: api/Bookings/Session/5
         [HttpGet("Session/{id}")]
+        [Authorize(Roles ="Admin, Instructor")]
         public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
@@ -83,6 +94,7 @@ namespace Annie_API.Controllers
         // TODO : use authorize and claim to validate user and prevent booking to other users 
         // POST: api/Bookings
         [HttpPost]
+        [Authorize(Roles = "Admin, Instructor")]
         public async Task<ActionResult<BookingDTO>> PostBooking(BookingRequest request)
         {
             if (request == null)
@@ -150,12 +162,25 @@ namespace Annie_API.Controllers
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
+        [Authorize]
         public async Task<IActionResult> DeleteBooking(long id)
         {
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email))
+            {
+                return Forbid();
+            }
+            
             var booking = await _context.Bookings.FindAsync(id);
             if (booking == null)
             {
                 return NotFound();
+            }
+
+            if (booking.User.Email != email) 
+            {
+                return Forbid();
             }
 
             _context.Bookings.Remove(booking);

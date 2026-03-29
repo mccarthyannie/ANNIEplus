@@ -1,6 +1,7 @@
 using AnniePlus.AuthenticationProviders;
 using AnniePlus.Components;
 using AnniePlus.Services;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 
@@ -13,6 +14,12 @@ builder.Services.AddSingleton(sp => new HttpClient
 {
     BaseAddress = new Uri("http://localhost:7000/")
 });
+
+builder.Services.AddAuthorization(config =>
+{
+        config.AddPolicy("CanChangeSessions", policy => policy.Requirements.Add(new CustomRoleRequirement(new string[] { "Admin", "Instructor" })));
+});
+builder.Services.AddSingleton<IAuthorizationHandler, UserRolesHandler>();
 
 builder.Services.AddAuthenticationCore();
 builder.Services.AddCascadingAuthenticationState();
