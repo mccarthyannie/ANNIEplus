@@ -6,6 +6,7 @@
 @using Annie_API.Models
 @using AnniePlus.Components.Pages
 @using Annie_API.DTOs
+@using System.Net.Http.Json
 @inject HttpClient Http
 @using System.Security.Claims
 @using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages
@@ -15,19 +16,88 @@
 
 <PageTitle>Bookings</PageTitle>
 
-@foreach (var booking in myBookings)
-{
-    <div class = "booking-card">
-        <h5>@booking.sessionId.Name</h5>
-        <p>@booking.sessionId.StartTime.ToString("dddd, MMMM d")</p>
-        <p>@booking.sessionId.Instructor</p>
-    </div>
-}
+<div class="page-header">
+    <h1>My Bookings</h1>
+    <p>Your upcoming sessions</p>
+</div>
+
+<div class="bookings-list">
+    @if (myBookings == null)
+    {
+        <p>You have no booked sessions!</p>
+        <button href="schedule">See what's available</button>
+    }
+    @foreach (var booking in myBookings ?? new())
+    {
+        <div class = "booking-card">
+            <div class="booking-main">
+                <div class="booking-name">@booking.Name</div>
+                <div class="booking-meta">
+                    <span>@booking.StartTime.ToString("MMM dd")</span>
+                    <span>@booking.Instructor</span>
+                </div>
+            </div>
+
+            <div class="booking-time">
+                @booking.StartTime.ToString("h:mm tt")
+                <button class="unenroll-btn" @onclick="() => OpenPopup(booking)">
+                    Unenroll
+                </button>
+            </div>
+        </div>
+    }
+</div>
+<div class="bookings-list past-sessions">
+    <h2 class="past-header">Past Sessions</h2>
+    @foreach (var booking in myPastBookings ?? new())
+    {
+        <div class="booking-card past">
+            <div class="booking-main">
+                <div class="booking-name">@booking.Name</div>
+                <div class="booking-meta">
+                    <span>@booking.StartTime.ToString("MMM dd")</span>
+                    <span>@booking.Instructor</span>
+                </div>
+            </div>
+            <div class="booking-time">
+                @booking.StartTime.ToString("h:mm tt")
+            </div>
+        </div>
+    }
+</div>
+
+    <Popup @bind-Visible="showPopup">
+        <div class="popup-content" style="text-align: center; padding: 10px;">
+            <h3 style="text-transform: uppercase; margin-bottom: 20px;">Cancel @selectedBooking?.Name at @selectedBooking?.StartTime.ToString("h:mm tt")</h3>
+            
+            @if (selectedBooking != null)
+            {
+                <div style="margin-bottom: 20px; line-height: 1.6;">
+                    <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
+                    <p>@selectedBooking.StartTime.ToString("dddd, MMM d")</p>
+                </div>
+            }
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="unenroll-btn" @onclick="RemoveBooking">
+                    Unenroll
+                </button>
+            </div>
+        </div>
+    </Popup>
+
 
 @code 
 {
+    private bool isLoading;
+    private string? errorMessage;
+    private List<Session> allBookings;
     private List<Session>? myBookings;
+    private List<Session>? myPastBookings;
     private UserDTO? CurrentUser;
+    private bool showPopup = false;
+    private Session? selectedBooking;
+    private Session? selectedSession;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -44,21 +114,95 @@
             CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
 
             await LoadBookings();
-            StateHasCHanged();
+            StateHasChanged();
         }
     }
+
+    private void OpenPopup(Session booking)
+    {
+        selectedBooking = booking;
+        selectedSession = booking;
+        showPopup = true;
+    }
+
+    private async Task<long?> GetBookingId(long sessionId)
+    {
+            var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>("api/Bookings");
+
+            if (bookings == null)
+                return null;
+
+            var match = bookings.FirstOrDefault(b =>
+                b.SessionId == sessionId &&
+                b.UserId == CurrentUser!.Id
+            );
+
+            return match?.Id;
+
+    }
+
+    private async Task RemoveBooking()
+{
+    if (selectedBooking == null) return;
+
+    try
+    {
+        var bookingId = await GetBookingId(selectedBooking.Id);
+
+        if (bookingId == null)
+        {
+            errorMessage = "Booking not found.";
+            Console.WriteLine("DELETE FAILED: bookingId null");
+            return;
+        }
+
+        Console.WriteLine($"Deleting booking {bookingId}");
+
+        var response = await Http.DeleteAsync($"api/Bookings/{bookingId}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var err = await response.Content.ReadAsStringAsync();
+            errorMessage = err;
+            Console.WriteLine("DELETE ERROR: " + err);
+            return;
+        }
+
+        showPopup = false;
+
+        await LoadBookings();
+    }
+    catch (Exception ex)
+    {
+        errorMessage = ex.Message;
+        Console.WriteLine("EXCEPTION: " + ex.Message);
+    }
+}
 
     private async Task LoadBookings()
     {
         try 
         {
             isLoading = true;
-            sessions = await Http.GetFromJsonAsync<List><Session>>($"api/Bookings/User/{CurrentUser!.Id}");
-            sessions ??= new();
+            allBookings = (await Http.GetFromJsonAsync<List<Session>>(
+                            $"api/Bookings/User/{CurrentUser!.Id}"
+                        ))?
+                        .OrderBy(s => s.StartTime)
+                        .ToList();
+            allBookings ??= new();
+
+            myBookings = allBookings
+                .Where(s => s.StartTime >= DateTime.Now)
+                .OrderBy(s => s.StartTime)
+                .ToList();
         }
         catch (Exception ex)
         {
             errorMessage = $"Error loading bookings: {ex.Message}";
+        }
+        finally 
+        {
+            isLoading = false;
         }
     }
 }

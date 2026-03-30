@@ -1,0 +1,84 @@
+.hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.anim-circle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background: rgba(188, 237, 243, 0.889);
+    animation: breathe 7s ease-in-out infinite;
+    z-index: 0;
+}
+
+@keyframes breathe {
+    0%, 100% {
+        box-shadow:
+            0 0 0 15px rgba(188, 237, 243, 0.3),
+            0 0 0 30px rgba(188, 237, 243, 0.2),
+            0 0 0 45px rgba(188, 237, 243, 0.15),
+            0 0 0 60px rgba(188, 237, 243, 0.1),
+            0 0 0 75px rgba(188, 237, 243, 0.05);
+    }
+    50% {
+        box-shadow:
+            0 0 0 25px rgba(188, 237, 243, 0.3),
+            0 0 0 50px rgba(188, 237, 243, 0.2),
+            0 0 0 75px rgba(188, 237, 243, 0.15),
+            0 0 0 100px rgba(188, 237, 243, 0.1),
+            0 0 0 125px rgba(188, 237, 243, 0.05);
+    }
+}
+
+.wordmark {
+    position: relative;
+    z-index: 1;
+    font-size: 52px;
+    font-weight: 300;
+    letter-spacing: -1px;
+    margin-bottom: 2rem;
+}
+
+.btns {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    gap: 12px;
+}
+
+.btn {
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 12px 32px;
+    border-radius: 100px;
+    transition: all 0.2s ease;
+}
+
+.btn-primary {
+    background: #2c2c2a;
+    color: #fff;
+    border: none;
+}
+
+.btn-primary:hover { opacity: 0.75; }
+
+.btn-secondary {
+    background: transparent;
+    color: #2c2c2a;
+    border: 1px solid #aaa;
+}
+
+.btn-secondary:hover { background: #f0f0ee; }

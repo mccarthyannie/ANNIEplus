@@ -13,67 +13,85 @@
 @inject IJSRuntime JS
 
 <PageTitle>Schedule</PageTitle>
+<div class="schedule-page">
+    <div class="schedule-nav d-flex align-items-center justify-content-between p-3">
+       <button class="btn" @onclick="GoToPreviousWeek">
+            <i class="bi bi-chevron-left"></i>
+            <h6>Previous</h6>
+        </button>  
+        
+        <h1 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h1>
 
-<div class="schedule-nav d-flex align-items-center justify-content-between p-3">
-    <button class="btn" @onclick="GoToPreviousWeek">
-        <i class="bi bi-chevron-left"></i> +
-    </button>
-    
-    <h2 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h2>
-    
-    <button class="btn" @onclick="GoToNextWeek">
-        - <i class="bi bi-chevron-right"></i>
-    </button>
-</div>
+        <button class="btn" @onclick="GoToNextWeek">
+            <i class="bi bi-chevron-right"></i>
+            <h6>Next</h6>
+        </button> 
+    </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4>Weekly Schedule</h4>
-    <NavLink class="nav-link" href="create-session">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
-     </NavLink>
-</div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Weekly Schedule</h2>
+        <NavLink class="nav-link" href="create-session">
+                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
+        </NavLink>
+    </div>
 
-<div class="scheduler-grid">
-    @for (int i = 0; i < 7; i++)
+    @if (errorMessage != null)
     {
-        var targetDate = currentStartDate.AddDays(i);
-        var daySessions = sessions
-            .Where(s => s.StartTime.Date == targetDate.Date)
-            .OrderBy(s => s.StartTime)
-            .ToList();
-
-        <div class="day-column">
-            <div class="day-header">
-                <span class="day-name">@targetDate.ToString("ddd")</span>
-                <span class="day-date">@targetDate.ToString("MMM d")</span>
-            </div>
-
-            <div class="sessions-list">
-                @if (!daySessions.Any())
-                {
-                    <div class="no-classes">No Classes</div>
-                }
-                else
-                {
-                    @foreach (var session in daySessions)
-                    {
-                        <div class="session-card">
-                            <div class="name">@session.Name</div>
-                            <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
-                            <div class="instructor">@session.Instructor</div>
-                            
-                            <div class="meta">
-                                <span>@session.Capacity spots available</span>
-                            </div>
-                            
-                            <button class="book-btn" @onclick="() => OpenPopup(session)">Book</button>
-                        </div>
-                    }
-                }
-            </div>
+        <div class="alert @(isSuccess ? "alert-success" : "alert-error")">
+            @errorMessage
         </div>
     }
+
+    <div class="scheduler-grid">
+        @for (int i = 0; i < 7; i++)
+        {
+            var targetDate = currentStartDate.AddDays(i);
+            var daySessions = sessions
+                .Where(s => s.StartTime.Date == targetDate.Date)
+                .OrderBy(s => s.StartTime)
+                .ToList();
+
+            <div class="day-column">
+                <div class="day-header">
+                    <span class="day-name">@targetDate.ToString("ddd")</span>
+                    <span class="day-date">@targetDate.ToString("MMM d")</span>
+                </div>
+
+                <div class="sessions-list">
+                    @if (!daySessions.Any())
+                    {
+                        <div class="no-classes">No Classes</div>
+                    }
+                    else
+                    {
+                        @foreach (var session in daySessions)
+                        {
+                            <div class="session-card @(bookedSessionIds.Contains(session.Id) ? "session-booked" : "") @(IsUnavailable(session) ? "session-unavailable" : "")"
+                                @onclick="() => HandleSessionClick(session)">
+                                <div class="name">@session.Name</div>
+                                <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
+                                <div class="instructor">@session.Instructor</div>
+                                <div class="meta">
+                                    <span>
+                                        @if (bookedSessionIds.Contains(session.Id))
+                                        { <text>✓ Booked</text> }
+                                        else if (session.Capacity <= 0)
+                                        { <text>Fully Booked</text> }
+                                        else if (session.StartTime <= DateTime.Now)
+                                        { <text>Session Passed</text> }
+                                        else
+                                        { <text>@session.Capacity spots available</text> }
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
     <Popup @bind-Visible="showPopup">
         <div class="popup-content" style="text-align: center; padding: 10px;">
             <h3 style="text-transform: uppercase; margin-bottom: 20px;">Confirm Booking</h3>
@@ -87,7 +105,6 @@
                     <p class="text-muted">Instructor: @selectedSession.Instructor</p>
                 </div>
             }
-
             <div style="display: flex; gap: 10px; margin-top: 25px;">
                 <button class="btn btn-dark w-100" @onclick="HandleBooking">
                     Confirm Booking
@@ -106,6 +123,11 @@
     private string? errorMessage;
     private List<Session> sessions = new();
     public static UserDTO? CurrentUser;
+    private HashSet<long> bookedSessionIds = new();
+    private bool isSuccess;
+
+    private bool IsUnavailable(Session s) =>
+        s.StartTime <= DateTime.Now || s.Capacity <= 0;
 
     private async Task GoToNextWeek()
     {
@@ -123,7 +145,10 @@
     {
         selectedSession = session;
 
-        showPopup = true;
+        if (CurrentUser?.Role == 0)
+            showPopup = true;
+        else
+            Nav.NavigateTo($"/edit-session/{session.Id}");
     }
     private void ClosePopup() => showPopup = false;
 
@@ -159,6 +184,12 @@
             var result = await Http.GetFromJsonAsync<List<Session>>(url);
             sessions = result ?? new List<Session>();
             
+             if (CurrentUser != null)
+                {
+                    var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>($"api/Bookings?userId={CurrentUser.Id}");
+                    bookedSessionIds = bookings?.Select(b => b.SessionId).ToHashSet() ?? new();
+                }
+
             StateHasChanged(); 
         }
         catch (Exception ex)
@@ -170,10 +201,18 @@
     private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();
 
+    private async Task HandleSessionClick(Session session)
+    {
+        if (bookedSessionIds.Contains(session.Id))
+            Nav.NavigateTo("/bookings");
+        else if (!IsUnavailable(session))
+            await OpenPopup(session);
+    }
+
     private async Task HandleBooking()
     {
         if (selectedSession == null) return;
-
+        
         if (CurrentUser == null)
         {
             Nav.NavigateTo("/login");
@@ -207,13 +246,27 @@
             
             if (response.IsSuccessStatusCode)
             {
+                isSuccess = true;
+                errorMessage = "Booking confirmed!";
                 showPopup = false;
-                errorMessage = null;
                 await LoadSessions();
+                _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        await InvokeAsync(StateHasChanged);
+                    });
             }
             else
             {
+                isSuccess = false;
                 errorMessage = await response.Content.ReadAsStringAsync();
+                _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        await InvokeAsync(StateHasChanged);
+                    });
             }
         }
         catch (Exception ex)
