@@ -107,7 +107,8 @@ namespace Annie_API.Controllers
         // POST: api/login/instructor
         [Route("api/register/instructor")]
         [HttpPost]
-        public async Task<ActionResult<TokenDTO>> RegisterInstructor(RegisterUserRequest request)
+        [Authorize(Roles = "Admin")]
+        public async Task<ActionResult> RegisterInstructor(RegisterUserRequest request)
         {
             if (await EmailExists(request.Email))
             {
@@ -118,7 +119,7 @@ namespace Annie_API.Controllers
             {
                 Name = request.Name,
                 Email = request.Email,
-                Role = UserRole.User,
+                Role = UserRole.Instructor,
                 UserName = request.Email
             };
 
@@ -130,9 +131,16 @@ namespace Annie_API.Controllers
                 return BadRequest(result.Errors.Select(e => e.Description));
             }
 
-            await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.Instructor).ToString());
-
-            return Ok(BuildToken(user));
+            await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.User).ToString());
+            var response = await SendConfirmationEmailAsnyc(user);
+            if (response)
+            {
+                return NoContent();
+            }
+            else
+            {
+                return BadRequest("Failed to send confirmation email.");
+            }
         }
 
 

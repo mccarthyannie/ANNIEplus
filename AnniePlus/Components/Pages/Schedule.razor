@@ -124,11 +124,13 @@
         await LoadSessions();
     }
 
+
     private async Task GoToPreviousWeek()
     {
         currentStartDate = currentStartDate.AddDays(-7);
         await LoadSessions();
     }
+
 
     private async Task OpenPopup(Session session)
     {
@@ -136,7 +138,10 @@
 
         showPopup = true;
     }
+
+
     private void ClosePopup() => showPopup = false;
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -157,6 +162,7 @@
         }
     }
 
+
     private async Task LoadSessions()
     {
         try 
@@ -174,8 +180,10 @@
         }
     }
 
+
     private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();
+
 
     private async Task HandleBooking()
     {

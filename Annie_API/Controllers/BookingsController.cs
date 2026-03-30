@@ -10,6 +10,7 @@ using Annie_API.DTOs;
 using Annie_API.Data;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
+using Humanizer;
 
 namespace Annie_API.Controllers
 {
@@ -18,10 +19,14 @@ namespace Annie_API.Controllers
     public class BookingsController : ControllerBase
     {
         private readonly DataContext _context;
+        private readonly IEmailComposer _emailComposer;
+        private readonly IConfiguration _configuration;
 
-        public BookingsController(DataContext context)
+        public BookingsController(DataContext context, IEmailComposer emailComposer, IConfiguration configuration)
         {
             _context = context;
+            _emailComposer = emailComposer;
+            _configuration = configuration;
         }
 
         // GET: api/Bookings
@@ -104,7 +109,6 @@ namespace Annie_API.Controllers
                 return Forbid();
             }
 
-
             if (request == null)
             {
                 return BadRequest();
@@ -124,7 +128,6 @@ namespace Annie_API.Controllers
 
             if (repeats != 0) {
                 return BadRequest("Booking already exists. ");
-               
             }
 
             var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
@@ -159,6 +162,11 @@ namespace Annie_API.Controllers
                 return BadRequest("The booking could not be processed. Error: " + ex.Message);
             }
 
+            var response = await SendBookingConfirmationEmail(booking);
+            if (!response)
+            {
+                Console.WriteLine("Error Sending Confirmation Email.");
+            }
 
             return CreatedAtAction("GetBooking", 
                                     new { id = booking.Id }, 
@@ -197,6 +205,27 @@ namespace Annie_API.Controllers
             await _context.SaveChangesAsync();
 
             return NoContent();
+        }
+
+        private async Task<bool> SendBookingConfirmationEmail(Booking booking)
+        {
+            string messageBody = "<h1>Annie+ Booking Confirmation</h1><br><p>Your session has been booked!</p>";
+            if (!String.IsNullOrEmpty(booking.Session!.Location))
+            {
+                messageBody += $"<p>The session will occur on {booking.Session.StartTime.Humanize()} at {booking.Session.Location}</p>";
+            }
+            else 
+            {
+                messageBody += $"<p>The session will occur on {booking.Session.StartTime.Humanize()}</p>";
+            }
+            messageBody += $"<b><p>We are excited to see you there!</p></b><a href=\"{_configuration["Frontend Url"]}\">Click Here to see your Bookings</a>";
+
+            return _emailComposer.ComposeEmail(
+                booking.User!.Name,
+                booking.User.Email!,
+                "Annie+ Booking Confirmation",
+                messageBody
+                );
         }
     }
 }
