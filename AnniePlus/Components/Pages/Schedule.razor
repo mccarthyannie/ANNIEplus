@@ -114,18 +114,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await authenticationStateTask;
-        if (authState == null) return;
-
-        claimsPrincipal = authState.User;
-
-        if (claimsPrincipal.Claims.Count() == 0)
-        {
-
-            Nav.NavigateTo("/");
-            return;
-        }
-
         await LoadSessions();
     }
 

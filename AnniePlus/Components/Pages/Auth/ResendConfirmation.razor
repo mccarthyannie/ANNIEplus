@@ -1,0 +1,68 @@
+﻿@page "/resend-confirmation"
+
+@using Annie_API.DTOs
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<h3>Resend Confirmation Email</h3>
+
+<EditForm Model="email" OnValidSubmit="@HandleResend" FormName="ResendForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText class="form-control" @bind-Value="email.email" />
+        <ValidationMessage For="@(() => email.email)" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Send Confirmation</button>
+
+</EditForm>
+@code {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    EmailDTO email = new();
+    string errorMessage = string.Empty;
+
+    private ClaimsPrincipal? claimsPrincipal;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() != 0)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    public async Task HandleResend()
+    {
+        var response = await Http.PostAsJsonAsync("api/auth/ResendToken", email);
+
+        if (response.IsSuccessStatusCode)
+        {
+            Nav.NavigateTo("/schedule");
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+            return;
+        }
+    }
+}

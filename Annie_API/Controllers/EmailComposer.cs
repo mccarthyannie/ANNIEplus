@@ -1,22 +1,57 @@
-﻿using MimeKit;
+﻿using Microsoft.AspNetCore.Mvc;
+using MimeKit;
+using MailKit.Net.Smtp;
 
 namespace Annie_API.Controllers
 {
-    public class EmailComposer
+    public class EmailComposer : IEmailComposer
     {
-        public async Task<bool>  ComposeEmail(string recipientName, string recipientEmail, string sessionName, DateTime sessionDate)
+        private readonly IConfiguration _configuration;
+
+        public EmailComposer(IConfiguration configuration) 
         {
-            var message = new MimeMessage();
-            message.From.Add(new MailboxAddress("Annie Team", ""));
-            message.To.Add(new MailboxAddress(recipientName, recipientEmail));
+            _configuration = configuration;
+        }
+        
+        public bool ComposeEmail(string recipientName, string recipientEmail, string subject, string body)
+        {
+            try
+            {
+                var from = _configuration["Mail:From"];
+                var name = _configuration["Mail:Name"];
+                var smtp = _configuration["Mail:Smtp"];
+                var port = _configuration["Mail:Port"];
+                var password = _configuration["Mail:Password"];
 
-            var body = $"Dear {recipientName},\n\n" +
-                $"You have successfully booked a session: {sessionName} on {sessionDate.ToString("MMMM dd, yyyy")}.\n\n" +
-                "Thank you for choosing our service!\n\n" +
-                "Best regards,\n" +
-                "Annie Team";
+                var message = new MimeMessage(); 
+                message.From.Add(new MailboxAddress(name, from));
+                message.To.Add(new MailboxAddress(recipientName, recipientEmail));
+                message.Subject = subject;
 
-            return true;
+                BodyBuilder builder = new()
+                {
+                    HtmlBody = body
+                };
+                message.Body = builder.ToMessageBody();
+
+                using (var client = new SmtpClient())
+                {
+                    client.Connect(smtp, int.Parse(port!), false);
+                    client.Authenticate(from, password);
+                    client.Send(message);
+                    client.Disconnect(true);
+                }
+
+                // represents the client that will send the email
+                return true;
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("### Error with EmailComposer: ###");
+                Console.WriteLine(ex.Message);
+                return false;
+            }
         }
     }
 }

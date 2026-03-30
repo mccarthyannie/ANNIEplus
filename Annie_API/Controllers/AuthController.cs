@@ -24,11 +24,15 @@ namespace Annie_API.Controllers
     {
         private readonly IUsersUnitOfWork _usersUnitOfWork;
         private readonly IConfiguration _configuration;
+        private readonly IEmailComposer _emailComposer;
+        private readonly DataContext _context;
 
-        public AuthController(IUsersUnitOfWork usersUnitOfWork, IConfiguration configuration)
+        public AuthController(IUsersUnitOfWork usersUnitOfWork, IConfiguration configuration, IEmailComposer emailComposer, DataContext context)
         {
             _usersUnitOfWork = usersUnitOfWork;
             _configuration = configuration;
+            _emailComposer = emailComposer;
+            _context = context;
         }
 
         // POST: api/login
@@ -38,14 +42,24 @@ namespace Annie_API.Controllers
         {
             var result = await _usersUnitOfWork.LoginAsync(request);
 
-            if (!result.Succeeded) 
+            if (result.Succeeded)
             {
-                return BadRequest("Email or Password are wrong.");
+                var user = await _usersUnitOfWork.GetUserAsync(request.Email);
+
+                return Ok(BuildToken(user));
             }
 
-            var user = await _usersUnitOfWork.GetUserAsync(request.Email);
-    
-            return Ok(BuildToken(user));
+            if (result.IsLockedOut)
+            { 
+                return BadRequest("Account is locked. Please try again later.");
+            }
+
+            if (result.IsNotAllowed)
+            { 
+                return BadRequest("Email not confirmed. Please check your email for confirmation link.");
+            }
+
+            return BadRequest("Email or Password are wrong.");
         }
 
 
@@ -53,7 +67,7 @@ namespace Annie_API.Controllers
         // POST: api/login
         [Route("api/register")]
         [HttpPost]
-        public async Task<ActionResult<TokenDTO>> RegisterUser(RegisterUserRequest request)
+        public async Task<ActionResult> RegisterUser(RegisterUserRequest request)
         {
             if (await EmailExists(request.Email))
             {
@@ -77,8 +91,15 @@ namespace Annie_API.Controllers
             }
 
             await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.User).ToString());
-
-            return Ok(BuildToken(user));
+            var response = await SendConfirmationEmailAsnyc(user);
+            if (response) 
+            {
+                return NoContent();
+            }
+            else 
+            {
+                return BadRequest("Failed to send confirmation email.");
+            }
         }
 
 
@@ -112,6 +133,68 @@ namespace Annie_API.Controllers
             await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.Instructor).ToString());
 
             return Ok(BuildToken(user));
+        }
+
+
+        [HttpGet("ConfirmEmail")]
+        public async Task<ActionResult> ConfirmEmail(string userId, string token)
+        {
+            token = token.Replace(' ', '+');
+
+            var user = await _context.Users.FindAsync(userId);
+
+            if (user == null) 
+            {
+                return BadRequest("Invalid user.");
+            }
+
+            var result = await _usersUnitOfWork.ConfirmEmailAsync(user, token);
+            if (!result.Succeeded) 
+            {
+                return BadRequest(result.Errors.FirstOrDefault());
+            }
+
+            return Ok("Email confirmed successfully.");
+        }
+
+
+        [HttpPost("resend-confirmation")]
+        public async Task<IActionResult> ResendConfirmation([FromBody] EmailDTO email)
+        {
+            var user = await _usersUnitOfWork.GetUserAsync(email.email);
+            if (user == null) 
+            {
+                return NotFound();
+            }
+
+
+            var response = await SendConfirmationEmailAsnyc(user);
+            if (response)
+            {
+                return NoContent();
+            }
+            else
+            {
+                return BadRequest("Failed to send confirmation email.");
+            }
+        }
+
+
+        private async Task<bool> SendConfirmationEmailAsnyc(User user)
+        {
+            var confirmationToken = await _usersUnitOfWork.CreateConfirmationToken(user);
+            var link = Url.Action("ConfirmEmail", "auth", 
+                new { userid = user.Id, token = confirmationToken }, 
+                Request.Scheme, _configuration["Frontend Url"]);
+
+            return _emailComposer.ComposeEmail(
+                user.Name,
+                user.Email!,
+                "Annie+ User Confirmation",
+                "<h1>Annie+ User Confirmation</h1><br> " +
+                "<p>Please click the link below to confirm your e-mail and use Annie+!</p>" +
+                $"<form action=\"{link}\"><input type=\"submit\" value=\"Confirm Email\" /></form>"
+                );
         }
 
         private TokenDTO BuildToken(User user)
