@@ -53,11 +53,15 @@
 
     public async Task HandleResend()
     {
-        var response = await Http.PostAsJsonAsync("api/auth/ResendToken", email);
+        var response = await Http.PostAsJsonAsync("api/resend-confirmation", email);
 
         if (response.IsSuccessStatusCode)
         {
             Nav.NavigateTo("/schedule");
+        }
+        else if ((int)response.StatusCode == 404)
+        {
+            errorMessage = "Email Not Found";
         }
         else
         {

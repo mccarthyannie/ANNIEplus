@@ -1,6 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using MailKit.Net.Smtp;
+using Microsoft.AspNetCore.Mvc;
 using MimeKit;
-using MailKit.Net.Smtp;
+using MimeKit.Text;
 
 namespace Annie_API.Controllers
 {
@@ -24,15 +25,14 @@ namespace Annie_API.Controllers
                 var password = _configuration["Mail:Password"];
 
                 var message = new MimeMessage(); 
-                message.From.Add(new MailboxAddress(name, from));
+                message.From.Add(new MailboxAddress(name, from!));
                 message.To.Add(new MailboxAddress(recipientName, recipientEmail));
                 message.Subject = subject;
 
-                BodyBuilder builder = new()
+                message.Body = new TextPart(TextFormat.Html)
                 {
-                    HtmlBody = body
+                    Text = body
                 };
-                message.Body = builder.ToMessageBody();
 
                 using (var client = new SmtpClient())
                 {
