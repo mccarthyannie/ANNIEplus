@@ -27,58 +27,71 @@ else if (!sessions.Any())
 else
 {
     <div class="bookings-list instructor-sessions-table">
-        @foreach (var session in sessions)
-        {
-            <div class="booking-card instructor-card">
+    @foreach (var session in sessions)
+    {
+        <div class="booking-card instructor-card">
+
+            <div class="booking-header">
                 <div class="booking-main">
                     <div class="booking-name">@session.Name</div>
                     <div class="booking-meta">
                         <span>@ToLocal(session.StartTime).ToString("MMM dd, h:mm tt")</span>
+
                         @if (!string.IsNullOrEmpty(session.Location))
                         {
                             <span>@session.Location</span>
                         }
+
                         <span>@session.Capacity spots remaining</span>
                     </div>
                 </div>
+
                 <div class="booking-actions">
                     <button class="btn btn-sm btn-outline-secondary"
-                        @onclick="() => ToggleEnrolled(session.Id)">
+                            @onclick="() => ToggleEnrolled(session.Id)">
                         @(expandedSessionId == session.Id ? "Hide" : "Manage")
                     </button>
-                    <a href="/edit-session/@session.Id" class="btn btn-sm btn-primary">Edit</a>
-                </div>
 
-                @if (expandedSessionId == session.Id)
-                {
-                    <div class="enrolled-list">
-                        @if (enrolledUsers.TryGetValue(session.Id, out var users) && users.Any())
-                        {
-                            @foreach (var user in users)
-                            {
-                                var checkKey = $"{session.Id}_{user.Email}";
-                                var isCheckedIn = checkedIn.Contains(checkKey);
-                                <div class="enrolled-row">
-                                    <div class="enrolled-info">
-                                        <span class="enrolled-name">@user.Name</span>
-                                        <span class="enrolled-email">@user.Email</span>
-                                    </div>
-                                    <button class="btn btn-sm @(isCheckedIn ? "btn-success" : "btn-outline-secondary") checkin-btn"
-                                        @onclick="() => ToggleCheckIn(session.Id, user.Email!)">
-                                        @(isCheckedIn ? "✓ Present" : "Mark Present")
-                                    </button>
-                                </div>
-                            }
-                        }
-                        else
-                        {
-                            <p class="text-muted">No one enrolled yet.</p>
-                        }
-                    </div>
-                }
+                    <a href="/edit-session/@session.Id"
+                       class="btn btn-sm btn-primary">
+                        Edit
+                    </a>
+                </div>
             </div>
-        }
-    </div>
+
+            @if (expandedSessionId == session.Id)
+            {
+                <div class="enrolled-list">
+                    @if (enrolledUsers.TryGetValue(session.Id, out var users) && users.Any())
+                    {
+                        @foreach (var user in users)
+                        {
+                            var checkKey = $"{session.Id}_{user.Email}";
+                            var isCheckedIn = checkedIn.Contains(checkKey);
+
+                            <div class="enrolled-row">
+                                <div class="enrolled-info">
+                                    <span class="enrolled-name">@user.Name</span>
+                                    <span class="enrolled-email">@user.Email</span>
+                                </div>
+
+                                <button class="btn btn-sm @(isCheckedIn ? "btn-success" : "btn-outline-secondary") checkin-btn"
+                                        @onclick="() => ToggleCheckIn(session.Id, user.Email!)">
+                                    @(isCheckedIn ? "✓ Present" : "Mark Present")
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No one enrolled yet.</p>
+                    }
+                </div>
+            }
+
+        </div>
+    }
+</div>
 }
 
 @code {

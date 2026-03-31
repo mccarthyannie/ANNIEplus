@@ -1,21 +1,21 @@
 .instructor-card {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
     gap: 12px;
+    padding: 16px 18px;
 }
 
 .booking-actions {
     display: flex;
     gap: 8px;
     align-items: center;
-    justify-content: flex-end;
 }
 
 .enrolled-list {
     border-top: 1px solid #D9C5A0;
-    padding-top: 12px;
-    display: flex;
-    flex-direction: column;
+    padding-top: 14px;
+    margin-top: 6px;
+    gap: 8px;
 }
 
 .enrolled-row {
@@ -48,6 +48,34 @@
     color: #9B8070;
 }
 
+.btn {
+    border-radius: 999px;
+    font-size: 0.85rem;
+    padding: 6px 14px;
+    transition: all 0.18s ease;
+}
+
+.btn-primary {
+    background: #7C5C3E;
+    border: 1px solid #7C5C3E;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #6b4f35;
+    border-color: #6b4f35;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid #C8A882;
+    color: #7C5C3E;
+}
+
+.btn-outline-secondary:hover {
+    background: #EDE4D6;
+}
+
 .checkin-btn {
     border-radius: 999px;
     min-width: 110px;
@@ -56,7 +84,6 @@
     border: 1px solid #C8A882;
     color: #7C5C3E;
     background: transparent;
-    transition: background-color 0.18s ease;
 }
 
 .checkin-btn:hover {
@@ -64,14 +91,13 @@
 }
 
 .checkin-btn.btn-success {
-    background: #6B8C5A;
-    border-color: #6B8C5A;
-    color: #F5ECD9;
+    background: #7FA37C;
+    border-color: #7FA37C;
+    color: white;
 }
 
 .checkin-btn.btn-success:hover {
-    background: #5a7a4a;
-    border-color: #5a7a4a;
+    background: #6e936b;
 }
 
 .instructor-sessions-table {
@@ -94,11 +120,29 @@
     background: #EDE4D6;
 }
 
-.instructor-card .booking-meta span {
-    display: block;
+.booking-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #7C5C3E;
 }
 
-.instructor-card {
-    justify-content: space-between;
-    align-items: center;
+.booking-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.booking-card.instructor-card > .booking-main,
+.booking-card.instructor-card > .booking-actions {
+    width: 100%;
+}
+
+.booking-card.instructor-card {
+    display: flex;
+}
+
+.instructor-sessions-table .booking-card {
+    padding: 14px 18px;
 }

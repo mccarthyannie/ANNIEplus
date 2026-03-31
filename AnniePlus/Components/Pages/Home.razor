@@ -19,8 +19,13 @@
             <div class="annie-btn-row">
                 @if (role == "Admin")
                 {
-                    <a href="/register-instructor" class="annie-btn-primary">register instructor</a>
-                    <a href="/create-session" class="annie-btn-secondary">create session</a>
+                    <a href="/create-session" class="annie-btn-primary">add session</a>
+                    <a href="/register-instructor" class="annie-btn-secondary">create instructor</a>
+                }
+                else if (role == "Instructor")
+                {
+                    <a href="/instructor-view" class="annie-btn-primary">my sessions</a>
+                    <a href="/schedule" class="annie-btn-secondary">view schedule</a>
                 }
                 else
                 {
