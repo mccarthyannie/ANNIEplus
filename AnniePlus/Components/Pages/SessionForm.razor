@@ -92,39 +92,43 @@
         End time: <strong>@session.EndTime.ToString("h:mm tt")</strong>
     </div>
 
-    <div class="card mb-3">
-        <div class="card-body">
-            <div class="form-check form-switch mb-0">
-                <input class="form-check-input" type="checkbox" role="switch"
-                    @bind="showRecurrence" id="recurSwitch" />
-                <label class="form-check-label" for="recurSwitch">Repeat this session</label>
-            </div>
+    @if (!isEditMode)
+    {
+        <div class="card mb-3">
+            <div class="card-body">
+                <div class="form-check form-switch mb-0">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                        @bind="showRecurrence" id="recurSwitch" />
+                    <label class="form-check-label" for="recurSwitch">Repeat this session</label>
+                </div>
 
-            @if (showRecurrence)
-            {
-                <hr />
-                <label class="form-label">Repeat on:</label>
-                <div class="d-flex gap-2 flex-wrap mb-2">
-                    @foreach (var day in Enum.GetValues<DayOfWeek>())
-                    {
-                        var isLocked = day == sessionDate.DayOfWeek;
-                        var isActive = selectedDays.Contains(day) || isLocked;
-                        <button type="button"
-                            class="btn btn-sm rounded-circle @(isActive ? "btn-secondary" : "btn-outline-secondary")"
-                            style="width:42px;height:42px;"
-                            disabled="@isLocked"
-                            @onclick="() => ToggleDay(day)">
-                            @day.ToString().Substring(0, 2)
-                        </button>
-                    }
-                </div>
-                <div class="mt-3">
-                    <label class="form-label">Repeat Until:</label>
-                    <InputDate @bind-Value="recurrenceEndDate" class="form-control" style="width:220px" />
-                </div>
-            }
+                @if (showRecurrence)
+                {
+                    <hr />
+                    <label class="form-label">Repeat on:</label>
+                    <div class="d-flex gap-2 flex-wrap mb-2">
+                        @foreach (var day in Enum.GetValues<DayOfWeek>())
+                        {
+                            var isLocked = day == sessionDate.DayOfWeek;
+                            var isActive = selectedDays.Contains(day) || isLocked;
+                            <button type="button"
+                                class="btn btn-sm rounded-circle @(isActive ? "btn-secondary" : "btn-outline-secondary")"
+                                style="width:42px;height:42px;"
+                                disabled="@isLocked"
+                                @onclick="() => ToggleDay(day)">
+                                @day.ToString().Substring(0, 2)
+                            </button>
+                        }
+                    </div>
+                    <div class="mt-3">
+                        <label class="form-label">Repeat Until:</label>
+                        <InputDate @bind-Value="recurrenceEndDate" class="form-control" style="width:220px" />
+                    </div>
+                }
+            </div>
         </div>
-    </div>
+    }
+
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
@@ -229,6 +233,7 @@
                 sessionDate = DateOnly.FromDateTime(result.StartTime);
                 startTimeStr = result.StartTime.ToString("HH:mm");
                 durationMinutes = (int)(result.EndTime - result.StartTime).TotalMinutes;
+                UpdateEndTime();
             }
         }
 
@@ -345,6 +350,8 @@
 
     private async Task HandleSubmit()
     {
+        if (isEditMode) session.Id = Id!.Value;
+
         session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);
         session.EndTime = DateTime.SpecifyKind(session.EndTime, DateTimeKind.Utc);
 

@@ -101,7 +101,100 @@
 .past-header {
     color: #888;
     font-size: 1rem;
-    text-transform: uppercase;
     letter-spacing: 0.05em;
     margin: 2rem 0 0.5rem;
+}
+
+.bookings-page-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+.bookings-main {
+    flex: 1;
+}
+
+.bookings-sidebar {
+    width: 300px;
+    position: sticky;
+    top: 1rem;
+}
+
+.profile-card {
+    background: #E8EEE0;
+    border: 1px solid #C4D0B0;
+    border-radius: 14px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.profile-card h3 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.4rem;
+    font-weight: 500;
+    color: #2C1A0E;
+    margin: 0 0 0.25rem;
+}
+
+.profile-card p {
+    font-size: 0.85rem;
+    color: #9B8070;
+    margin: 0;
+}
+
+.profile-divider {
+    height: 1px;
+    background: #C4D0B0;
+    margin: 0.75rem 0;
+}
+
+.title-divider {
+    height: 1px;
+    background: #D4B49A;
+    margin: 0.75rem 0;
+}
+
+.profile-card a {
+    display: inline-block;
+    margin-top: 0.5rem;
+    padding: 6px 16px;
+    font-size: 0.8rem;
+    border: 1px solid #C4D0B0;
+    border-radius: 999px;
+    color: #6B8C5A;
+    text-decoration: none;
+    transition: all 0.18s ease;
+}
+
+.profile-card a:hover {
+    background: #C4D0B0;
+    color: #2C1A0E;
+}
+
+.empty-card {
+    background: #F2E0D0;
+    border: 1px solid #D4B49A;
+    border-radius: 14px;
+    padding: 16px 18px;
+    font-size: 0.9rem;
+    color: #9B8070;
+    font-style: italic;
+}
+
+.past-empty-card {
+    background: #e9e7e5;
+    border: 1px solid #cccac8;
+    border-radius: 14px;
+    padding: 12px 16px;
+    font-size: 0.7rem;
+    color: #747271;
+    font-style: italic;
+}
+
+.profile-links {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 0.5rem;
 }

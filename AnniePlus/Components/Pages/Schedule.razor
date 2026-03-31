@@ -150,11 +150,13 @@
     {
         var colours = new[]
         {
-            ("#E8EEE0", "#C4D0B0"),
-            ("#F2E0D0", "#D4B49A"),
-            ("#F5ECD9", "#D9C5A0"),
+            ("#E8EEE0", "#C4D0B0"), // sage green
+            ("#F2E0D0", "#D4B49A"), // terracotta
+            ("#F5ECD9", "#D9C5A0"), // warm sand
+            ("#EDE0D8", "#C8B0A0"), // warm brown
+            ("#E8E4D8", "#C4BEA8"), // warm oat
         };
-        var index = Math.Abs(name.GetHashCode()) % colours.Length;
+        var index = name.Sum(c => (int)c) % colours.Length;
         return colours[index];
     }
     protected override async Task OnInitializedAsync()

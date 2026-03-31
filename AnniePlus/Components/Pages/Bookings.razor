@@ -17,16 +17,40 @@
 <PageTitle>Bookings</PageTitle>
 
 <div class="page-header">
-    <h1>My Bookings</h1>
-    <p>Your upcoming sessions</p>
+        <h1>My Bookings</h1>
+        <div class="title-divider"></div>
 </div>
 
+<div class="bookings-page-layout">
+<div class="bookings-sidebar">
+    <AuthorizeView>
+        <Authorized>
+            <div class="profile-card">
+                <h3>@context.User.Identity?.Name</h3>
+                <p>@context.User.FindFirstValue(ClaimTypes.Email)</p>
+                <div class="profile-divider"></div>
+                <p><strong>@(myBookings?.Count ?? 0)</strong> upcoming · <strong>@(myPastBookings?.Count ?? 0)</strong> completed</p>
+                <div class="profile-links">
+                    <a href="/change-password">Change Password</a>
+                    <a href="/logout">Log Out</a>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+<div class="bookings-main">
+    <div class="page-header">
+        <h4>YOUR UPCOMING SESSIONS</h4>
+    </div>
+
 <div class="bookings-list">
-    @if (myBookings == null)
+    @if (!myBookings?.Any() ?? true)
     {
-        <p>You have no booked sessions!</p>
-        <button href="schedule">See what's available</button>
+        <div class="empty-card">No upcoming sessions... yet.</div>
     }
+    else
+    {
     @foreach (var booking in myBookings ?? new())
     {
         <div class = "booking-card">
@@ -46,9 +70,16 @@
             </div>
         </div>
     }
+    }
 </div>
 <div class="bookings-list past-sessions">
-    <h2 class="past-header">Past Sessions</h2>
+    <h2 class="past-header">PAST SESSIONS</h2>
+    @if (!myPastBookings?.Any() ?? true)
+    {
+        <div class="past-empty-card">No past sessions... yet.</div>
+    }
+    else
+    {
     @foreach (var booking in myPastBookings ?? new())
     {
         <div class="booking-card past">
@@ -64,6 +95,9 @@
             </div>
         </div>
     }
+    }
+</div>
+</div>
 </div>
 
     <Popup @bind-Visible="showPopup">
@@ -94,7 +128,9 @@
     private List<Session> allBookings;
     private List<Session>? myBookings;
     private List<Session>? myPastBookings;
-    private UserDTO? CurrentUser;
+    private string? userEmail;
+    private string? userName;
+    private string? userRole;
     private bool showPopup = false;
     private Session? selectedBooking;
     private Session? selectedSession;
@@ -122,6 +158,11 @@
             Nav.NavigateTo("/login");
             return;
         }
+
+        userEmail = claimsPrincipal.FindFirstValue(ClaimTypes.Email);
+        userName  = claimsPrincipal.FindFirstValue(ClaimTypes.Name);
+        userRole  = claimsPrincipal.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
 
         await LoadBookings();
         StateHasChanged();
@@ -163,6 +204,13 @@
                 errorMessage = err;
                 Console.WriteLine("DELETE ERROR: " + err);
                 return;
+            }
+
+            var session = await Http.GetFromJsonAsync<Session>($"api/Sessions/{selectedBooking.Id}");
+            if (session != null)
+            {
+                session.Capacity++;
+                await Http.PutAsJsonAsync($"api/Sessions/{session.Id}", session);
             }
 
             showPopup = false;
