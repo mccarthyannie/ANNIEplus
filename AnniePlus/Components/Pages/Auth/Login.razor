@@ -31,6 +31,14 @@
         <InputText type="password" class="form-control" @bind-Value="request.Password"/>
         <ValidationMessage For="@(() => request.Password)" />
     </div>
+
+    <div class="form-group mb-3">
+        <a href="/resend-confirmation">Resend Confirmation Email</a>
+    </div>
+
+    <div class="form-group mb-3">
+        <a href="/reset-password">Reset Password</a>
+    </div>
      
     @if (!string.IsNullOrEmpty(errorMessage))
     {

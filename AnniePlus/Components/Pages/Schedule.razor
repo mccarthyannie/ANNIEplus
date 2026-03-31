@@ -159,18 +159,6 @@
     }
     protected override async Task OnInitializedAsync()
     {
-        var authState = await authenticationStateTask;
-        if (authState == null) return;
-
-        claimsPrincipal = authState.User;
-
-        if (claimsPrincipal.Claims.Count() == 0)
-        {
-
-            Nav.NavigateTo("/");
-            return;
-        }
-
         await LoadSessions();
     }
 
@@ -181,11 +169,13 @@
         await LoadSessions();
     }
 
+
     private async Task GoToPreviousWeek()
     {
         currentStartDate = currentStartDate.AddDays(-7);
         await LoadSessions();
     }
+
 
     private async Task OpenPopup(Session session)
     {
@@ -200,7 +190,10 @@
         else
             showPopup = true;
     }
+
+
     private void ClosePopup() => showPopup = false;
+
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -225,6 +218,7 @@
         StateHasChanged();
     }
 
+
     private async Task LoadSessions()
     {
         try 
@@ -247,6 +241,7 @@
             Console.WriteLine($"Error loading sessions: {ex.Message}");
         }
     }
+
 
     private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();

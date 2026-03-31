@@ -57,12 +57,32 @@ namespace Annie_API.Repositories.Implementations
 
         public async Task<SignInResult> LoginAsync(LoginRequest request) 
         {
-            return await _signInManager.PasswordSignInAsync(request.Email, request.Password, false, false);
+            return await _signInManager.PasswordSignInAsync(request.Email, request.Password, false, true);
         }
 
         public async Task LogoutAsync()
         { 
             await _signInManager.SignOutAsync();
+        }
+
+        public async Task<string> CreateConfirmationToken(User user)
+        {
+            return await _userManager.GenerateEmailConfirmationTokenAsync(user);
+        }
+
+        public async Task<IdentityResult> ConfirmEmailAsync(User user, string token)
+        {
+            return await _userManager.ConfirmEmailAsync(user, token);
+        }
+
+        public async Task<string> CreateResetPasswordToken(User user)
+        {
+            return await _userManager.GeneratePasswordResetTokenAsync(user);
+        }
+
+        public async Task<IdentityResult> ResetPasswordAsync(User user, string token, string newPassword)
+        {
+            return await _userManager.ResetPasswordAsync(user, token, newPassword);
         }
     }
 }

@@ -1,3 +1,4 @@
+using Annie_API.Controllers;
 using Annie_API.Data;
 using Annie_API.Models;
 using Annie_API.Repositories.Implementations;
@@ -50,16 +51,26 @@ builder.Services.AddTransient<SeedData>();
 builder.Services.AddScoped<IUsersRepository, UsersRepository>();
 builder.Services.AddScoped<IUsersUnitOfWork, UsersUnitOfWork>();
 
+builder.Services.AddScoped<IEmailComposer, EmailComposer>();
+
 // disables checks for password complexity for development
 // email must be unique 
 builder.Services.AddIdentity<User, IdentityRole>(u =>
-{ 
+{
+    u.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
+    u.SignIn.RequireConfirmedEmail = true;
     u.User.RequireUniqueEmail = true;
     u.Password.RequireDigit = false;
     u.Password.RequiredUniqueChars = 0;
     u.Password.RequireLowercase = false;
     u.Password.RequireUppercase = false;
     u.Password.RequireNonAlphanumeric = false;
+    
+    // block sign in after failed attempts 
+    u.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+    u.Lockout.MaxFailedAccessAttempts = 5;
+    u.Lockout.AllowedForNewUsers = true;
+    
 })
     .AddEntityFrameworkStores<DataContext>()
     .AddDefaultTokenProviders();

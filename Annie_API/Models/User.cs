@@ -11,4 +11,6 @@ public class User : IdentityUser
 	public string Name { get; set; } = null!;
 
     public UserRole Role { get; set; } = UserRole.User;
+
+	public ICollection<Booking>? Bookings { get; set; }
 }

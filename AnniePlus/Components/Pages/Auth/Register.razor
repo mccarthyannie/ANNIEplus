@@ -74,6 +74,11 @@
         else
         {
             errorMessage = await response.Content.ReadAsStringAsync();
+            Console.WriteLine("Error registering user:\n" + errorMessage);
+            return;
         }
+
+        // TODO:  Add notice to user that email confirmation has been sent
+		Nav.NavigateTo("/");
     }
 }

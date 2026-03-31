@@ -55,6 +55,10 @@ namespace Annie_API.Data
 
                 await _usersUnitOfWork.AddUserToRoleASync(user, role.ToString());
 
+                // manually confirm the email of this user
+                var token = await _usersUnitOfWork.CreateConfirmationToken(user);
+                await _usersUnitOfWork.ConfirmEmailAsync(user, token);
+
             }
             
             return user;
