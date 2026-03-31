@@ -31,7 +31,6 @@
                 <div class="profile-divider"></div>
                 <p><strong>@(myBookings?.Count ?? 0)</strong> upcoming · <strong>@(myPastBookings?.Count ?? 0)</strong> completed</p>
                 <div class="profile-links">
-                    <a href="/change-password">Change Password</a>
                     <a href="/logout">Log Out</a>
                 </div>
             </div>
@@ -57,13 +56,13 @@
             <div class="booking-main">
                 <div class="booking-name">@booking.Name</div>
                 <div class="booking-meta">
-                    <span>@booking.StartTime.ToString("MMM dd")</span>
+                    <span>@ToLocal(booking.StartTime).ToString("MMM dd")</span>
                     <span>@booking.Instructor</span>
                 </div>
             </div>
 
             <div class="booking-time">
-                @booking.StartTime.ToString("h:mm tt")
+                @ToLocal(booking.StartTime).ToString("h:mm tt")
                 <button class="unenroll-btn" @onclick="() => OpenPopup(booking)">
                     Unenroll
                 </button>
@@ -86,12 +85,12 @@
             <div class="booking-main">
                 <div class="booking-name">@booking.Name</div>
                 <div class="booking-meta">
-                    <span>@booking.StartTime.ToString("MMM dd")</span>
+                    <span>@ToLocal(booking.StartTime).ToString("MMM dd")</span>
                     <span>@booking.Instructor</span>
                 </div>
             </div>
             <div class="booking-time">
-                @booking.StartTime.ToString("h:mm tt")
+                @ToLocal(booking.StartTime).ToString("h:mm tt")
             </div>
         </div>
     }
@@ -108,7 +107,7 @@
             {
                 <div style="margin-bottom: 20px; line-height: 1.6;">
                     <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
-                    <p>@selectedBooking.StartTime.ToString("dddd, MMM d")</p>
+                    <p>@ToLocal(selectedBooking.StartTime).ToString("dddd, MMM d")</p>
                 </div>
             }
 
@@ -139,6 +138,12 @@
     private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
 
     private ClaimsPrincipal? claimsPrincipal;
+
+    private DateTime ToLocal(DateTime utc)
+    {
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, nlZone);
+    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -206,13 +211,6 @@
                 return;
             }
 
-            var session = await Http.GetFromJsonAsync<Session>($"api/Sessions/{selectedBooking.Id}");
-            if (session != null)
-            {
-                session.Capacity++;
-                await Http.PutAsJsonAsync($"api/Sessions/{session.Id}", session);
-            }
-
             showPopup = false;
 
             await LoadBookings();
@@ -237,12 +235,12 @@
             allBookings ??= new();
 
             myBookings = allBookings
-                .Where(s => s.StartTime >= DateTime.Now)
+                .Where(s => s.StartTime >= DateTime.UtcNow)
                 .OrderBy(s => s.StartTime)
                 .ToList();
 
             myPastBookings = allBookings
-                .Where(s => s.StartTime < DateTime.Now)
+                .Where(s => s.StartTime < DateTime.UtcNow)
                 .OrderBy(s => s.StartTime)
                 .ToList();
         }

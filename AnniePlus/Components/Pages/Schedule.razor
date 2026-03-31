@@ -76,11 +76,11 @@
                         @foreach (var session in daySessions)
                         {
                             var (bg, border) = GetSessionColour(session.Name);
-                            <div class="session-card ..." 
+                            <div class="session-card @(IsUnavailable(session) ? "session-past" : "")"
                                 style="background: @bg; border-color: @border;"
                                 @onclick="() => HandleSessionClick(session)">
                                 <div class="name">@session.Name</div>
-                                <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
+                                <div class="time">@ToLocal(session.StartTime).ToString("h:mm tt") @Duration(session) min</div>
                                 <div class="instructor">@session.Instructor</div>
                                 <div class="meta">
                                     <span>
@@ -111,8 +111,8 @@
             {
                 <div style="margin-bottom: 20px; line-height: 1.6;">
                     <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
-                    <p>@selectedSession.StartTime.ToString("dddd, MMM d")</p>
-                    <p><strong>@selectedSession.StartTime.ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                    <p>@ToLocal(selectedSession.StartTime).ToString("dddd, MMM d")</p>
+                    <p><strong>@ToLocal(selectedSession.StartTime).ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
                     <p>@selectedSession.Description</p>
                     <p class="text-muted">Instructor: @selectedSession.Instructor</p>
                 </div>
@@ -142,19 +142,25 @@
     private bool isSuccess;
 
     private bool IsUnavailable(Session s) =>
-        s.StartTime <= DateTime.Now || s.Capacity <= 0;
+        s.StartTime <= DateTime.UtcNow || s.Capacity <= 0;
 
     private ClaimsPrincipal? claimsPrincipal; 
+
+    private DateTime ToLocal(DateTime utc)
+    {
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, nlZone);
+    }
 
     private (string bg, string border) GetSessionColour(string name)
     {
         var colours = new[]
         {
-            ("#E8EEE0", "#C4D0B0"), // sage green
-            ("#F2E0D0", "#D4B49A"), // terracotta
-            ("#F5ECD9", "#D9C5A0"), // warm sand
-            ("#EDE0D8", "#C8B0A0"), // warm brown
-            ("#E8E4D8", "#C4BEA8"), // warm oat
+            ("#E8EEE0", "#C4D0B0"),
+            ("#F2E0D0", "#D4B49A"),
+            ("#F5ECD9", "#D9C5A0"),
+            ("#EDE0D8", "#C8B0A0"), 
+            ("#E8E4D8", "#C4BEA8"), 
         };
         var index = name.Sum(c => (int)c) % colours.Length;
         return colours[index];
@@ -250,6 +256,16 @@
 
     private async Task HandleSessionClick(Session session)
     {
+        var authState = await authenticationStateTask;
+        var role = authState.User.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (role == "Admin" || role == "Instructor")
+        {
+            Nav.NavigateTo($"/edit-session/{session.Id}");
+            return;
+        }
+
         if (bookedSessionIds.Contains(session.Id))
             Nav.NavigateTo("/bookings");
         else if (!IsUnavailable(session))

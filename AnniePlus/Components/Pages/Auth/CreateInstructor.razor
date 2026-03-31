@@ -1,0 +1,78 @@
+@page "/register-instructor"
+
+@rendermode InteractiveServer
+
+@using AnniePlus.Services
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@using Annie_API.DTOs
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+<PageTitle>Create Session</PageTitle>
+
+<h3>Register</h3>
+
+<EditForm Model="newUser" OnValidSubmit="@HandleRegister" FormName="RegisterForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label>Name:</label>
+        <InputText class="form-control" @bind-Value="newUser.Name"/>
+        <ValidationMessage For="@(() => newUser.Name)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText class="form-control" @bind-Value="newUser.Email"/>
+        <ValidationMessage For="@(() => newUser.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Password:</label>
+        <InputText type="password" class="form-control" @bind-Value="newUser.Password"/>
+        <ValidationMessage For="@(() => newUser.Password)" />
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    @if (success)
+    {
+        <div class="alert alert-success mt-3">Instructor registered successfully!</div>
+    }
+
+    <button type="submit" class="btn btn-primary">Sign Up</button>
+
+</EditForm>
+
+
+@code {
+    private RegisterUserRequest newUser = new();
+    private string? errorMessage;
+    private bool success = false;
+
+   private async Task HandleRegister()
+{
+    errorMessage = null;
+    success = false;
+
+    var response = await Http.PostAsJsonAsync("api/register/instructor", newUser);
+
+    if (response.IsSuccessStatusCode)
+    {
+        success = true;
+        newUser = new();
+    }
+    else
+    {
+        errorMessage = await response.Content.ReadAsStringAsync();
+    }
+}
+}

@@ -28,7 +28,13 @@
 
     <div class="form-group mb-3">
         <label>Instructor:</label>
-        <InputText @bind-Value="session.Instructor" class="form-control" />
+        <InputSelect @bind-Value="session.Instructor" class="form-control">
+            <option value="" disabled selected>-- Select Instructor --</option>
+            @foreach (var instructor in instructors)
+            {
+                <option value="@instructor.Name">@instructor.Name</option>
+            }
+        </InputSelect>
         <ValidationMessage For="@(() => session.Instructor)" />
     </div>
 
@@ -180,7 +186,7 @@
     { 
         StartTime = DateTime.Today.AddHours(9), 
         EndTime = DateTime.Today.AddHours(10),
-        Instructor = "", 
+        Instructor = null!, 
         Capacity = 0,
         Status = SessionStatus.Available,
     };
@@ -195,6 +201,7 @@
     private bool customDuration = false;
     private bool showRecurrence = false;
     private bool confirmingDelete = false;
+    private List<UserDTO> instructors = new();
 
     private (string label, int min)[] durationOptions = 
     {
@@ -221,6 +228,9 @@
             Nav.NavigateTo("/");
             return;
         }
+
+        var instructorResult = await Http.GetFromJsonAsync<List<UserDTO>>("api/Users/Instructors");
+        instructors = instructorResult ?? new();
 
         UpdateEndTime();
 
@@ -305,8 +315,6 @@
             Location = session.Location,
             Capacity = session.Capacity,
             Description = session.Description,
-            StartTime = DateTime.SpecifyKind(date + session.StartTime.TimeOfDay, DateTimeKind.Utc),
-            EndTime = DateTime.SpecifyKind(date + session.StartTime.TimeOfDay + duration, DateTimeKind.Utc),
             Status = SessionStatus.Available,
         };
     }
@@ -352,8 +360,10 @@
     {
         if (isEditMode) session.Id = Id!.Value;
 
-        session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);
-        session.EndTime = DateTime.SpecifyKind(session.EndTime, DateTimeKind.Utc);
+        session.StartTime = TimeZoneInfo.ConvertTimeToUtc(session.StartTime, 
+            TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns"));
+        session.EndTime = TimeZoneInfo.ConvertTimeToUtc(session.EndTime, 
+            TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns"));
 
         if (session.EndTime <= session.StartTime)
         {

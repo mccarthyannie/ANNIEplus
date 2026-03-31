@@ -132,7 +132,7 @@ namespace Annie_API.Controllers
                 return BadRequest(result.Errors.Select(e => e.Description));
             }
 
-            await _usersUnitOfWork.AddUserToRoleASync(user, (UserRole.User).ToString());
+            await _usersUnitOfWork.AddUserToRoleASync(user, UserRole.Instructor.ToString());
             var response = await SendConfirmationEmailAsnyc(user);
             if (response)
             {

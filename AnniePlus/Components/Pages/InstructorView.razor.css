@@ -1,0 +1,104 @@
+.instructor-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    justify-content: flex-end;
+}
+
+.enrolled-list {
+    border-top: 1px solid #D9C5A0;
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+}
+
+.enrolled-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #EDE4D6;
+}
+
+.enrolled-row:last-child {
+    border-bottom: none;
+}
+
+.enrolled-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.enrolled-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2C1A0E;
+}
+
+.enrolled-email {
+    font-size: 0.8rem;
+    color: #9B8070;
+}
+
+.checkin-btn {
+    border-radius: 999px;
+    min-width: 110px;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border: 1px solid #C8A882;
+    color: #7C5C3E;
+    background: transparent;
+    transition: background-color 0.18s ease;
+}
+
+.checkin-btn:hover {
+    background: #EDE4D6;
+}
+
+.checkin-btn.btn-success {
+    background: #6B8C5A;
+    border-color: #6B8C5A;
+    color: #F5ECD9;
+}
+
+.checkin-btn.btn-success:hover {
+    background: #5a7a4a;
+    border-color: #5a7a4a;
+}
+
+.instructor-sessions-table {
+    border: 1px solid #D9C5A0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.instructor-sessions-table .booking-card {
+    border: none;
+    border-bottom: 1px solid #D9C5A0;
+    border-radius: 0;
+}
+
+.instructor-sessions-table .booking-card:last-child {
+    border-bottom: none;
+}
+
+.instructor-sessions-table .booking-card:hover {
+    background: #EDE4D6;
+}
+
+.instructor-card .booking-meta span {
+    display: block;
+}
+
+.instructor-card {
+    justify-content: space-between;
+    align-items: center;
+}

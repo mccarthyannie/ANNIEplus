@@ -11,16 +11,28 @@
         <p class="annie-tagline">farm your peace</p>
 
         <AuthorizeView>
-            <Authorized>
-                <div class="annie-btn-row">
+        <Authorized>
+            @{
+                var role = context.User.Claims
+                    .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+            }
+            <div class="annie-btn-row">
+                @if (role == "Admin")
+                {
+                    <a href="/register-instructor" class="annie-btn-primary">register instructor</a>
+                    <a href="/create-session" class="annie-btn-secondary">create session</a>
+                }
+                else
+                {
                     <a href="/schedule" class="annie-btn-primary">view schedule</a>
                     <a href="/bookings" class="annie-btn-secondary">my bookings</a>
-                </div>
-                <p style="font-size:13px;color:#9B8070;">
-                    welcome back, @context.User.Identity?.Name —
-                    <a href="/logout" style="color:#C4613A;">log out</a>
-                </p>
-            </Authorized>
+                }
+            </div>
+            <p style="font-size:13px;color:#9B8070;">
+                welcome back, @context.User.Identity?.Name —
+                <a href="/logout" style="color:#C4613A;">log out</a>
+            </p>
+        </Authorized>
             <NotAuthorized>
                 <div class="annie-btn-row">
                     <a href="/schedule" class="annie-btn-primary">view schedule</a>

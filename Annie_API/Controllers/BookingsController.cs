@@ -96,7 +96,7 @@ namespace Annie_API.Controllers
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
                                                                                             {Name = b.User.Name,
-                                                                                                Email = b.User.Id,                                                                                
+                                                                                                Email = b.User.Email,                                                                                
                                                                                                 Role = b.User.Role}) 
                                                                                                 .ToListAsync();
         }
@@ -203,6 +203,10 @@ namespace Annie_API.Controllers
             {
                 return Forbid();
             }
+
+            var session = await _context.Sessions.FindAsync(booking.SessionId);
+            if (session != null)
+                session.Capacity++;
 
             _context.Bookings.Remove(booking);
             await _context.SaveChangesAsync();
