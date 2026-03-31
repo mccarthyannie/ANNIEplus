@@ -156,6 +156,7 @@ namespace Annie_API.Controllers
             }
 
             _context.Sessions.Add(session);
+           
             try
             {
                 await _context.SaveChangesAsync();
@@ -178,6 +179,7 @@ namespace Annie_API.Controllers
             var session = await _context.Sessions
                 .Include(s => s.Bookings)
                 .FirstOrDefaultAsync(s => s.Id == id);
+
 
             if (session == null)
             {

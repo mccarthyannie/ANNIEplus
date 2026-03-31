@@ -44,6 +44,7 @@ namespace Annie_API.Controllers
                                                             .ToListAsync();
         }
 
+
         // Returns a booking by its id 
         // GET: api/Bookings/5
         [HttpGet("{id}")]
@@ -69,6 +70,7 @@ namespace Annie_API.Controllers
             });
         }
 
+
         // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
         [HttpGet("User")]
@@ -84,6 +86,7 @@ namespace Annie_API.Controllers
 
             return await _context.Bookings.Where(u => u.User.Email == email).Select(u => u.Session).ToListAsync();
         }
+
 
         // Returns the users that booked the session
         // GET: api/Bookings/Session/5
@@ -131,8 +134,7 @@ namespace Annie_API.Controllers
                 return BadRequest("Booking already exists. ");
             }
 
-            var count = await _context.Bookings.CountAsync(b => b.SessionId == request.SessionId);
-            if (count >= session.Capacity)
+            if (session.Capacity <= 0)
             {
                 return BadRequest("Session is fully booked.");
             }
@@ -149,6 +151,7 @@ namespace Annie_API.Controllers
             };
 
             _context.Bookings.Add(booking);
+            session.Capacity--;
             try
             {
                 await _context.SaveChangesAsync();
@@ -184,10 +187,7 @@ namespace Annie_API.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteBooking(long id)
         {
-            Console.WriteLine("AAAAAAAAA\nAAAAAAAAAAAAAA\nAAAAAAAAAAAA\n");
-            Console.WriteLine("before email from claims");
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
-            Console.WriteLine("before email empty check");
             if (String.IsNullOrEmpty(email))
             {
                 return Forbid();
