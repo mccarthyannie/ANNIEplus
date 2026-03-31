@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel.DataAnnotations;
 
 namespace Annie_API.Models;
 /*
@@ -7,13 +8,32 @@ namespace Annie_API.Models;
 
 public class Session
 {
+
+    [Required]
     public long Id { get; set; }
-    public string Name { get; set; } = string.Empty;
+
+    [Required]
+    public string Name { get; set; } = null!;
+
     public string? Description { get; set; }
-    public required DateTime StartTime { get; set; }
-    public DateTime EndTime { get; set; } = DateTime.MinValue;
-    public required int Capacity { get; set; }
+
+    [Required]
+    public DateTime StartTime { get; set; }
+
+    [Required]
+    public DateTime EndTime { get; set; }
+
+    [Required]
+    public int Capacity { get; set; }
+
     public SessionStatus Status { get; set; } = SessionStatus.Available;
-    public required string Instructor { get; set; }
+
+    [Required]
+    public required string Instructor { get; set; } = string.Empty;
+
     public string? Location { get; set; }
+
+    public ICollection<Booking>? Bookings { get; set; } = new List<Booking>();
+
+
 }
