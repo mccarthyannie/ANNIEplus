@@ -1,4 +1,10 @@
+using AnniePlus.AuthenticationProviders;
 using AnniePlus.Components;
+using AnniePlus.Services;
+using Annie_Shared.Auth;
+
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Hosting.StaticWebAssets;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,10 +12,23 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-builder.Services.AddScoped(sp => new HttpClient
+builder.Services.AddSingleton(sp => new HttpClient
 {
     BaseAddress = new Uri("http://localhost:7000/")
 });
+
+builder.Services.AddAuthorization(config =>
+{
+        config.AddPolicy("CanChangeSessions", policy => policy.Requirements.Add(new CustomRoleRequirement(new string[] { "Admin", "Instructor" })));
+});
+builder.Services.AddSingleton<IAuthorizationHandler, UserRolesHandler>();
+
+builder.Services.AddAuthenticationCore();
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationProvider>();
+builder.Services.AddScoped<AuthenticationStateProvider, AuthenticationProvider>(a => a.GetRequiredService<AuthenticationProvider>());
+builder.Services.AddScoped<ILoginService, AuthenticationProvider>(a => a.GetRequiredService<AuthenticationProvider>());
+
 
 // Enable static web assets when running from source (development).
 StaticWebAssetsLoader.UseStaticWebAssets(builder.Environment, builder.Configuration);
@@ -20,7 +39,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);

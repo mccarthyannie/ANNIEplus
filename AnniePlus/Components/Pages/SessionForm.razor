@@ -1,10 +1,16 @@
 @page "/create-session"
 @page "/edit-session/{Id:long}"
+
+@inject AuthenticationStateProvider AuthProvider
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
 @rendermode InteractiveServer
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using Annie_API.DTOs
 @inject HttpClient Http
 @inject NavigationManager Nav
+@inject IJSRuntime JS
 
 <PageTitle>Create Session</PageTitle>
 
@@ -14,47 +20,40 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
    
-    @*input for session name*@
     <div class="form-group mb-3">
         <label>Session Name:</label>
         <InputText @bind-Value="session.Name" class="form-control" />
         <ValidationMessage For="@(() => session.Name)" />
     </div>
 
-    @*select instructor from list of instructors in the database*@
     <div class="form-group mb-3">
         <label>Instructor:</label>
         <InputText @bind-Value="session.Instructor" class="form-control" />
         <ValidationMessage For="@(() => session.Instructor)" />
     </div>
 
-    @*select location from list of locations in the database*@
     <div class="form-group mb-3">
         <label>Location:</label>
         <InputText @bind-Value="session.Location" class="form-control" />
     </div>
 
-    @*input for session capacity*@
     <div class="form-group mb-3">
         <label>Class Capacity:</label>
         <InputNumber @bind-Value="session.Capacity" class="form-control" />
         <ValidationMessage For="@(() => session.Capacity)" />
     </div>
     
-    @*input for session description*@
     <div class="form-group mb-3">
         <label>Session Description:</label>
         <InputTextArea @bind-Value="session.Description" class="form-control" rows="3"/>
         <ValidationMessage For="@(() => session.Description)" />
     </div>
 
-    @*select the start and end time*@
     <div class="row mb-3">
         <div class="col-md-6">
-            <label class="form-label">End Time:</label>
+            <label class="form-label">Date:</label>
             <InputDate @bind-Value="sessionDate" class="form-control" @bind-Value:after="OnDateChanged"/>
         </div>
-
         <div class="col-md-6">
             <label class="form-label">Start Time:</label>
             <input type="time" class="form-control" value="@startTimeStr"
@@ -129,9 +128,7 @@
 
     @if (!string.IsNullOrEmpty(errorMessage))
     {
-        <div class="alert alert-danger mt-3">
-            @errorMessage
-        </div>
+        <div class="alert alert-danger mt-3">@errorMessage</div>
     }
 
     @if (isEditMode)
@@ -148,17 +145,11 @@
             <div class="alert alert-danger d-flex align-items-center gap-3 py-2">
                 <span>Delete just this session or all with the same schedule?</span>
                 <button type="button" class="btn btn-danger btn-sm"
-                    @onclick="() => DeleteSession(false)">
-                    Just This One
-                </button>
+                    @onclick="() => DeleteSession(false)">Just This One</button>
                 <button type="button" class="btn btn-danger btn-sm"
-                    @onclick="() => DeleteSession(true)">
-                    All in Series
-                </button>
+                    @onclick="() => DeleteSession(true)">All in Series</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm"
-                    @onclick="() => confirmingDelete = false">
-                    Cancel
-                </button>
+                    @onclick="() => confirmingDelete = false">Cancel</button>
             </div>
         }
     }
@@ -166,7 +157,6 @@
     <button type="submit" class="btn btn-primary">
         @(isEditMode ? "Save Changes" : "Create Session")
     </button>
-
 </EditForm>
 
 @if (submitted)
@@ -177,9 +167,11 @@
 }
 
 @code {
-    [Parameter]
-    public long? Id { get; set; }
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+    [Parameter] public long? Id { get; set; }
     private bool isEditMode => Id.HasValue;
+
     private Session session = new Session 
     { 
         StartTime = DateTime.Today.AddHours(9), 
@@ -188,6 +180,7 @@
         Capacity = 0,
         Status = SessionStatus.Available,
     };
+
     private bool submitted = false;
     private string? errorMessage;
     private DateTime recurrenceEndDate = DateTime.Today.AddMonths(1);
@@ -203,23 +196,43 @@
     {
         ("30 min", 30), ("1 hr", 60), ("1.5 hr", 90), ("2 hr", 120)
     };
-    protected override async Task OnInitializedAsync()
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+        if (!firstRender) return;
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var role = claimsPrincipal.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+        if (role == "User" || role == null)
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
         UpdateEndTime();
 
         if (isEditMode)
         {
             var result = await Http.GetFromJsonAsync<Session>($"api/Sessions/{Id}");
-
             if (result != null)
             {
                 session = result;
                 sessionDate = DateOnly.FromDateTime(result.StartTime);
                 startTimeStr = result.StartTime.ToString("HH:mm");
                 durationMinutes = (int)(result.EndTime - result.StartTime).TotalMinutes;
-                StateHasChanged();
             }
         }
+
+        StateHasChanged();
     }
 
     private void OnTimeChanged(ChangeEventArgs e)
@@ -227,6 +240,7 @@
         startTimeStr = e.Value?.ToString() ?? "09:00";
         UpdateEndTime();
     }
+
     private void SetDuration(int min)
     {
         durationMinutes = min;
@@ -246,13 +260,14 @@
         session.StartTime = sessionDate.ToDateTime(TimeOnly.FromTimeSpan(time));
         session.EndTime = session.StartTime.AddMinutes(durationMinutes);
     }
+
     private void ToggleDay(DayOfWeek day)
     {
         if (selectedDays.Contains(day)) selectedDays.Remove(day);
         else selectedDays.Add(day);
     }
 
-     private void EnableCustomDuration()
+    private void EnableCustomDuration()
     {
         customDuration = true;
         UpdateEndTime();
@@ -263,7 +278,6 @@
         var dates = new List<DateTime>();
         var current = session.StartTime.Date;
         var end = recurrenceEndDate.Date;
-
         var activeDays = new HashSet<DayOfWeek>(selectedDays) { sessionDate.DayOfWeek };
 
         while (current <= end)
@@ -328,6 +342,7 @@
             errorMessage = $"Error deleting: {ex.Message}";
         }
     }
+
     private async Task HandleSubmit()
     {
         session.StartTime = DateTime.SpecifyKind(session.StartTime, DateTimeKind.Utc);
@@ -349,7 +364,7 @@
                 if (showRecurrence)
                     await PostRecurringSessions(GetRecurrenceDates().Where(d => d.Date != session.StartTime.Date));
 
-                    Nav.NavigateTo("/schedule", true);
+                Nav.NavigateTo("/schedule", true);
             }
             else if (!showRecurrence)
             {
@@ -362,9 +377,8 @@
             else
             {
                 await PostRecurringSessions(GetRecurrenceDates());
+                Nav.NavigateTo("/schedule", true);
             }
-            
-            Nav.NavigateTo("/schedule", true);
         }
         catch (Exception ex)
         {

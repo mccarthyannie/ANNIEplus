@@ -1,0 +1,95 @@
+@page "/login"
+
+@rendermode InteractiveServer
+
+@using AnniePlus.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@using Annie_API.DTOs
+@using System.Security.Claims
+
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject ILoginService LoginService
+
+
+<h3>Login</h3>
+
+<EditForm Model="request" OnValidSubmit="@HandleLogin" FormName="LoginForm">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="form-group mb-3">
+        <label>Email:</label>
+        <InputText class="form-control" @bind-Value="request.Email"/>
+        <ValidationMessage For="@(() => request.Email)" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label>Password:</label>
+        <InputText type="password" class="form-control" @bind-Value="request.Password"/>
+        <ValidationMessage For="@(() => request.Password)" />
+    </div>
+     
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger mt-3">
+            @errorMessage
+        </div>
+    }
+
+    <button type="submit" class="btn btn-primary">Log in</button>
+
+</EditForm>
+
+
+@code 
+{
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private ClaimsPrincipal? claimsPrincipal;
+    private LoginRequest request = new();
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() != 0)
+        {
+            Nav.NavigateTo("/");
+        }
+    }
+
+    private async Task HandleLogin()
+    {
+        var response = await Http.PostAsJsonAsync("api/login", request);
+
+        Console.WriteLine($"Status: {response.StatusCode}");
+        var body = await response.Content.ReadAsStringAsync();
+        Console.WriteLine($"Body: {body}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var token = System.Text.Json.JsonSerializer.Deserialize<TokenDTO>(body, new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            });
+            if (token?.Token != null)
+            {
+                await LoginService.LoginAsync(token.Token);
+                Nav.NavigateTo("/");
+            }
+            else errorMessage = "Error logging in";
+        }
+        else
+        {
+            errorMessage = body;
+        }
+    }
+}

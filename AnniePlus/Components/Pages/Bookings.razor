@@ -99,23 +99,32 @@
     private Session? selectedBooking;
     private Session? selectedSession;
 
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private ClaimsPrincipal? claimsPrincipal;
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender) return;
+
+        if (authenticationStateTask == null)
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
-
-            if (json == null)
-            {
-                Nav.NavigateTo("/login");
-                return;
-            }
-            
-            CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
-
-            await LoadBookings();
-            StateHasChanged();
+            Nav.NavigateTo("/login");
+            return;
         }
+
+        var authState = await authenticationStateTask;
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadBookings();
+        StateHasChanged();
     }
 
     private void OpenPopup(Session booking)
@@ -127,57 +136,45 @@
 
     private async Task<long?> GetBookingId(long sessionId)
     {
-            var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>("api/Bookings");
-
-            if (bookings == null)
-                return null;
-
-            var match = bookings.FirstOrDefault(b =>
-                b.SessionId == sessionId &&
-                b.UserId == CurrentUser!.Id
-            );
-
-            return match?.Id;
-
+        var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>("api/Bookings");
+        return bookings?.FirstOrDefault(b => b.SessionId == sessionId)?.Id;
     }
 
     private async Task RemoveBooking()
-{
-    if (selectedBooking == null) return;
-
-    try
     {
-        var bookingId = await GetBookingId(selectedBooking.Id);
+        if (selectedBooking == null) return;
 
-        if (bookingId == null)
+        try
         {
-            errorMessage = "Booking not found.";
-            Console.WriteLine("DELETE FAILED: bookingId null");
-            return;
+            var bookingId = await GetBookingId(selectedBooking.Id);
+
+            if (bookingId == null)
+            {
+                errorMessage = "Booking not found.";
+                Console.WriteLine("DELETE FAILED: bookingId null");
+                return;
+            }
+
+            var response = await Http.DeleteAsync($"api/Bookings/{bookingId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                errorMessage = err;
+                Console.WriteLine("DELETE ERROR: " + err);
+                return;
+            }
+
+            showPopup = false;
+
+            await LoadBookings();
         }
-
-        Console.WriteLine($"Deleting booking {bookingId}");
-
-        var response = await Http.DeleteAsync($"api/Bookings/{bookingId}");
-
-        if (!response.IsSuccessStatusCode)
+        catch (Exception ex)
         {
-            var err = await response.Content.ReadAsStringAsync();
-            errorMessage = err;
-            Console.WriteLine("DELETE ERROR: " + err);
-            return;
+            errorMessage = ex.Message;
+            Console.WriteLine("EXCEPTION: " + ex.Message);
         }
-
-        showPopup = false;
-
-        await LoadBookings();
     }
-    catch (Exception ex)
-    {
-        errorMessage = ex.Message;
-        Console.WriteLine("EXCEPTION: " + ex.Message);
-    }
-}
 
     private async Task LoadBookings()
     {
@@ -185,7 +182,7 @@
         {
             isLoading = true;
             allBookings = (await Http.GetFromJsonAsync<List<Session>>(
-                            $"api/Bookings/User/{CurrentUser!.Id}"
+                            $"api/Bookings/User"
                         ))?
                         .OrderBy(s => s.StartTime)
                         .ToList();
@@ -193,6 +190,11 @@
 
             myBookings = allBookings
                 .Where(s => s.StartTime >= DateTime.Now)
+                .OrderBy(s => s.StartTime)
+                .ToList();
+
+            myPastBookings = allBookings
+                .Where(s => s.StartTime < DateTime.Now)
                 .OrderBy(s => s.StartTime)
                 .ToList();
         }

@@ -154,10 +154,6 @@ h1:focus {
     box-shadow: 0 2px 8px rgba(124, 92, 62, 0.12);
 }
 
-.session-card:nth-child(3n+1) { background: #E8EEE0; border-color: #C4D0B0; }
-.session-card:nth-child(3n+2) { background: #F2E0D0; border-color: #D4B49A; }
-.session-card:nth-child(3n)   { background: #F5ECD9; border-color: #D9C5A0; }
-
 .session-card .name       { font-size: 12px; font-weight: 500; color: #2C1A0E; margin-bottom: 3px; }
 .session-card .time       { font-size: 11px; color: #6B4E35; margin-bottom: 2px; }
 .session-card .instructor { font-size: 10px; color: #9B8070; }
@@ -228,4 +224,112 @@ box-shadow: 0 0 0 25px rgba(188, 237, 243, 0.3), 0 0 0 50px rgba(188, 237, 243, 
  100% {
 box-shadow: 0 0 0 15px rgba(188, 237, 243, 0.3), 0 0 0 30px rgba(188, 237, 243, 0.3), 0 0 0 45px rgba(188, 237, 243, 0.3), 0 0 0 60px rgba(188, 237, 243, 0.3), 0 0 0 75px rgba(188, 237, 243, 0.3);
  }
+}
+
+/* landing page */
+.annie-landing { font-family: 'DM Sans', sans-serif; }
+
+.annie-hero {
+    padding: 5rem 2rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.annie-wordmark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px;
+    font-weight: 400;
+    color: #2C1A0E;
+    margin: 0 0 0.25rem;
+    letter-spacing: -1px;
+}
+
+.annie-wordmark sup {
+    font-size: 32px;
+    color: #C4613A;
+    vertical-align: super;
+}
+
+.annie-tagline {
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: #9B8070;
+    margin: 0 0 2.5rem;
+}
+
+.annie-btn-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+
+.annie-btn-primary {
+    background: #7C5C3E;
+    color: #F5ECD9;
+    border: none;
+    border-radius: 999px;
+    padding: 12px 32px;
+    font-size: 15px;
+    text-decoration: none;
+    display: inline-block;
+    transition: background 0.15s;
+}
+
+.annie-btn-primary:hover { background: #C4613A; color: #F5ECD9; }
+
+.annie-btn-secondary {
+    background: transparent;
+    color: #7C5C3E;
+    border: 1.5px solid #C8A882;
+    border-radius: 999px;
+    padding: 11px 32px;
+    font-size: 15px;
+    text-decoration: none;
+    display: inline-block;
+    transition: all 0.15s;
+}
+
+.annie-btn-secondary:hover { background: #EDE4D6; color: #7C5C3E; }
+
+.annie-divider {
+    width: 48px;
+    height: 2px;
+    background: #C8A882;
+    margin: 0 auto 3rem;
+    border-radius: 2px;
+}
+
+.annie-features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    padding: 0 2rem 4rem;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.annie-feature {
+    text-align: center;
+    padding: 1.75rem 1rem;
+    background: #F2E0D0;
+    border-radius: 16px;
+    border: 1px solid #D4B49A;
+}
+
+.annie-feature-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #2C1A0E;
+    margin: 0 0 4px;
+}
+
+.annie-feature-desc {
+    font-size: 13px;
+    color: #9B8070;
+    margin: 0;
+    line-height: 1.5;
 }

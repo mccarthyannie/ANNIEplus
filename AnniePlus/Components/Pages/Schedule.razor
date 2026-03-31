@@ -30,9 +30,18 @@
 
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Weekly Schedule</h2>
-        <NavLink class="nav-link" href="create-session">
-                    <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
-        </NavLink>
+        <AuthorizeView>
+            <Authorized>
+                @if (context.User.Claims.FirstOrDefault(c => 
+                    c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value 
+                    is "Admin" or "Instructor")
+                {
+                    <NavLink class="nav-link" href="create-session">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
+                    </NavLink>
+                }
+            </Authorized>
+        </AuthorizeView>
     </div>
 
     @if (errorMessage != null)
@@ -66,7 +75,9 @@
                     {
                         @foreach (var session in daySessions)
                         {
-                            <div class="session-card @(bookedSessionIds.Contains(session.Id) ? "session-booked" : "") @(IsUnavailable(session) ? "session-unavailable" : "")"
+                            var (bg, border) = GetSessionColour(session.Name);
+                            <div class="session-card ..." 
+                                style="background: @bg; border-color: @border;"
                                 @onclick="() => HandleSessionClick(session)">
                                 <div class="name">@session.Name</div>
                                 <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
@@ -102,6 +113,7 @@
                     <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
                     <p>@selectedSession.StartTime.ToString("dddd, MMM d")</p>
                     <p><strong>@selectedSession.StartTime.ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                    <p>@selectedSession.Description</p>
                     <p class="text-muted">Instructor: @selectedSession.Instructor</p>
                 </div>
             }
@@ -115,6 +127,9 @@
 
 @code 
 {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
     private Booking booking = new();
     private DateTime currentStartDate = DateTime.Today;
     private bool showPopup = false;
@@ -128,6 +143,37 @@
 
     private bool IsUnavailable(Session s) =>
         s.StartTime <= DateTime.Now || s.Capacity <= 0;
+
+    private ClaimsPrincipal? claimsPrincipal; 
+
+    private (string bg, string border) GetSessionColour(string name)
+    {
+        var colours = new[]
+        {
+            ("#E8EEE0", "#C4D0B0"),
+            ("#F2E0D0", "#D4B49A"),
+            ("#F5ECD9", "#D9C5A0"),
+        };
+        var index = Math.Abs(name.GetHashCode()) % colours.Length;
+        return colours[index];
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        await LoadSessions();
+    }
+
 
     private async Task GoToNextWeek()
     {
@@ -145,34 +191,38 @@
     {
         selectedSession = session;
 
-        if (CurrentUser?.Role == 0)
-            showPopup = true;
-        else
+        var authState = await authenticationStateTask;
+        var role = authState.User.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (role == "Admin" || role == "Instructor")
             Nav.NavigateTo($"/edit-session/{session.Id}");
+        else
+            showPopup = true;
     }
     private void ClosePopup() => showPopup = false;
 
-    protected override async Task OnInitializedAsync()
-    {   
-        await LoadSessions();
-    }
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender) return;
+
+        if (authenticationStateTask == null)
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
-        
-            if (json != null)
-            {
-                CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
-            }
-            else
-            {
-                Nav.NavigateTo("/login");
-            }
-            StateHasChanged();
+            Nav.NavigateTo("/login");
+            return;
         }
+
+        var authState = await authenticationStateTask;
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadSessions();
+        StateHasChanged();
     }
 
     private async Task LoadSessions()
@@ -180,13 +230,13 @@
         try 
         {
             var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
-            
+
             var result = await Http.GetFromJsonAsync<List<Session>>(url);
             sessions = result ?? new List<Session>();
             
              if (CurrentUser != null)
                 {
-                    var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>($"api/Bookings?userId={CurrentUser.Id}");
+                    var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>($"api/Bookings/User");
                     bookedSessionIds = bookings?.Select(b => b.SessionId).ToHashSet() ?? new();
                 }
 
@@ -211,39 +261,43 @@
 
     private async Task HandleBooking()
     {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
         if (selectedSession == null) return;
-        
-        if (CurrentUser == null)
+
+        if (claimsPrincipal == null)
         {
             Nav.NavigateTo("/login");
             return;
         }
 
-        var request = new 
-        {
-            UserId = CurrentUser.Id,
-            SessionId = selectedSession.Id
-        };
-
         try 
         {
-            var userId = CurrentUser?.Id;
-
-            if (userId == null)
+            if (claimsPrincipal.Claims.Count() == 0)
             {
-                errorMessage = "You must be logged in to book.";
+                Nav.NavigateTo("/login");
+                StateHasChanged();
+                return;
+            }
+
+            var email = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                Nav.NavigateTo("/login");
                 StateHasChanged();
                 return;
             }
 
             var bookingRequest = new 
             { 
-                UserId = userId,
                 SessionId = selectedSession.Id
             };
 
             var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
-            
             if (response.IsSuccessStatusCode)
             {
                 isSuccess = true;

@@ -1,12 +1,52 @@
 ﻿@page "/"
 @rendermode InteractiveServer
-@using Syncfusion.Blazor.Navigations
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
-<div class="hero">
-    <div class="anim-circle"></div>
-    <h1 class="wordmark">aurannie+</h1>
-    <div class="btns">
-        <a href="/login" class="btn btn-secondary">Sign in</a>
-        <a href="/register" class="btn btn-primary">Begin</a>
+<PageTitle>annie+</PageTitle>
+
+<div class="annie-landing">
+    <div class="annie-hero">
+        <h1 class="annie-wordmark">annie<sup>+</sup></h1>
+        <p class="annie-tagline">find your stillness</p>
+
+        <AuthorizeView>
+            <Authorized>
+                <div class="annie-btn-row">
+                    <a href="/schedule" class="annie-btn-primary">view schedule</a>
+                    <a href="/bookings" class="annie-btn-secondary">my bookings</a>
+                </div>
+                <p style="font-size:13px;color:#9B8070;">
+                    welcome back, @context.User.Identity?.Name —
+                    <a href="/logout" style="color:#C4613A;">log out</a>
+                </p>
+            </Authorized>
+            <NotAuthorized>
+                <div class="annie-btn-row">
+                    <a href="/schedule" class="annie-btn-primary">view schedule</a>
+                    <a href="/login" class="annie-btn-secondary">log in</a>
+                </div>
+                <p style="font-size:13px;color:#9B8070;">
+                    new here? <a href="/register" style="color:#C4613A;">create an account</a>
+                </p>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="annie-divider"></div>
+
+    <div class="annie-features">
+        <div class="annie-feature">
+            <p class="annie-feature-title">expert instructors</p>
+            <p class="annie-feature-desc">guided by certified yoga practitioners</p>
+        </div>
+        <div class="annie-feature">
+            <p class="annie-feature-title">easy booking</p>
+            <p class="annie-feature-desc">reserve your spot in seconds</p>
+        </div>
+        <div class="annie-feature">
+            <p class="annie-feature-title">flexible schedule</p>
+            <p class="annie-feature-desc">morning, midday & evening sessions</p>
+        </div>
     </div>
 </div>
