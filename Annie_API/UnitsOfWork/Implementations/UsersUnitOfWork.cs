@@ -58,5 +58,15 @@ namespace Annie_API.UnitsOfWork.Implementations
         {
             return await _usersRepository.ConfirmEmailAsync(user, token);
         }
+
+        public Task<string> CreateResetPasswordToken(User user)
+        {
+            return _usersRepository.CreateResetPasswordToken(user);
+        }
+
+        public Task<IdentityResult> ResetPasswordAsync(User user, string token, string password)
+        {
+            return _usersRepository.ResetPasswordAsync(user, token, password);
+        }
     }
 }

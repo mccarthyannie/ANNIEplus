@@ -23,5 +23,9 @@ namespace Annie_API.UnitsOfWork.Interfaces
         Task<string> CreateConfirmationToken(User user);
 
         Task<IdentityResult> ConfirmEmailAsync(User user, string token);
+
+        Task<string> CreateResetPasswordToken(User user);
+
+        Task<IdentityResult> ResetPasswordAsync(User user, string token, string password);
     }
 }
