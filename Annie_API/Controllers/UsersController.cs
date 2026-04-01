@@ -1,34 +1,42 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using Annie_API.Authorization;
+using Annie_API.Data;
+using Annie_API.DTOs;
+using Annie_API.Models;
+using Annie_API.UnitsOfWork.Implementations;
+using Annie_API.UnitsOfWork.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Annie_API.Models;
-using Microsoft.AspNetCore.Authorization;
+using Org.BouncyCastle.Asn1.Ocsp;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
-using Annie_API.Authorization;
-using Annie_API.DTOs;
-using Annie_API.Data;
+using System.Threading.Tasks;
+using static System.Collections.Specialized.BitVector32;
 
 namespace Annie_API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize]
     public class UsersController : ControllerBase
     {
         private readonly DataContext _context;
+        private readonly IUsersUnitOfWork _usersUnitOfWork;
         private readonly Authorizator _authorizator = new Authorizator();
 
-        public UsersController(DataContext context)
+        public UsersController(DataContext context, IUsersUnitOfWork usersUnitOfWork)
         {
             _context = context;
+            _usersUnitOfWork = usersUnitOfWork;
         }
+
 
         // GET: api/Users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
         {
             return await _context.Users
@@ -40,8 +48,10 @@ namespace Annie_API.Controllers
             }).ToListAsync();
         }
 
+
         // GET: api/Users/Instructors
         [HttpGet("Instructors")]
+        [Authorize(Policy = "CanChangeSessions")]
         public async Task<ActionResult<IEnumerable<UserDTO>>> GetInstructors()
         {
             return await _context.Users
@@ -54,34 +64,26 @@ namespace Annie_API.Controllers
                 }).ToListAsync();
         }
 
-        // GET: api/Users/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<UserDTO>> GetUser(string id)
-        {
-            var user = await _context.Users.FindAsync(id);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            return new UserDTO
-            {
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role
-            };
-        }
-
         // PUT: api/Users/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(string id, User user)
+        [Authorize]
+        public async Task<IActionResult> PutUser(User newUser)
         {
-            if (id != user.Id)
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (String.IsNullOrEmpty(email))
+            {
+                return Forbid();
+            }
+
+            var user = await _usersUnitOfWork.GetUserAsync(email);
+
+            if (newUser.Id != user.Id)
             {
                 return BadRequest();
             }
 
+            _context.Entry(user).CurrentValues.SetValues(newUser);
             _context.Entry(user).State = EntityState.Modified;
 
             try
@@ -90,66 +92,8 @@ namespace Annie_API.Controllers
             }
             catch (DbUpdateConcurrencyException)
             {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
                     throw;
-                }
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Users
-        [HttpPost]
-        public async Task<ActionResult<User>> PostUser(User user)
-        {
-            user.PasswordHash = _authorizator.HashPassword(user.PasswordHash);
-
-            _context.Users.Add(user);
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateException)
-            {
-                if (UserExists(user.Id))
-                {
-                    return Conflict();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO
-            {
-                Name = user.Name,
-                Email = user.Email,
-                Role = user.Role
-            });
-
-
-
-
-        }
-
-        // DELETE: api/Users/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUser(string id)
-        {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
 
             return NoContent();
         }

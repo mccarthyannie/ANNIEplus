@@ -45,6 +45,18 @@ builder.Services.AddDbContext<DataContext>(opt =>
         o => o.EnableRetryOnFailure()
         ));
 
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("MethodPolicy", builder =>
+    {
+        builder.WithOrigins("http://localhost:5031", "https://localhost:5031")
+               .AllowAnyMethod() 
+               .AllowAnyHeader();
+    });
+});
+
+
 // transient used because seeding database will only be done when no users are present
 builder.Services.AddTransient<SeedData>();
 
@@ -153,6 +165,10 @@ app.Use(async (context, next) =>
     var authHeader = context.Request.Headers["Authorization"].ToString();
     await next();
 });
+
+app.UseRouting();
+
+app.UseCors("MethodPolicy");
 
 app.UseAuthentication();
 app.UseAuthorization();

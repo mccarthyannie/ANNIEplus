@@ -32,6 +32,18 @@ services:
         - ASPNETCORE_URLS=http://+:8080
         - ASPNETCORE_HTTPS_PORT=0
         - ASPNETCORE_ENVIRONMENT=Development
+        - jwtKey=${JWT_KEY}
+
+        - Mail__From=${MAIL_FROM}
+        - Mail__Name=${MAIL_NAME}
+        - Mail__Smtp=${MAIL_SMTP}
+        - Mail__Port=${MAIL_PORT}
+        - Mail__Password=${MAIL_PASSWORD}
+
+        - FrontendUrl=${FRONTEND_URL}
+        
+        - Admin__Email=${ADMIN_EMAIL}
+        - Admin__Password=${ADMIN_PASSWORD}   
 
 
 volumes:

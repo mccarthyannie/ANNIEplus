@@ -26,7 +26,6 @@ namespace Annie_API.Models
 
         public bool CheckedIn { get; set; } = false;
 
-        [JsonIgnore]
         public Session? Session { get; set; }
         
         [Required]

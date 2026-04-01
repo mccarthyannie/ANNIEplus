@@ -194,7 +194,7 @@
     private DateTime ToLocal(DateTime utc)
     {
         DateTime forcedUtc = DateTime.SpecifyKind(utc, DateTimeKind.Utc);
-        
+
         var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
         return TimeZoneInfo.ConvertTimeFromUtc(forcedUtc, nlZone);
     }
@@ -236,9 +236,9 @@
                 session = result;
                 sessionDate = DateOnly.FromDateTime(localStart);
                 startTimeStr = localStart.ToString("HH:mm");
-                
+
                 durationMinutes = (int)(localEnd - localStart).TotalMinutes;
-                
+
                 UpdateEndTime(); 
             }
         }
@@ -308,6 +308,8 @@
         {
             Name = session.Name,
             Instructor = session.Instructor,
+            StartTime = date,
+            EndTime = date.Add(duration),
             Location = session.Location,
             Capacity = session.Capacity,
             Description = session.Description,

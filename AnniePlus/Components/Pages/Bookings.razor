@@ -124,7 +124,8 @@
 {
     private bool isLoading;
     private string? errorMessage;
-    private List<Session> allBookings;
+    private List<Booking> allBookings = new();
+    private List<Session> mySessions = new();
     private List<Session>? myBookings;
     private List<Session>? myPastBookings;
     private string? userEmail;
@@ -182,8 +183,8 @@
 
     private async Task<long?> GetBookingId(long sessionId)
     {
-        var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>("api/Bookings");
-        return bookings?.FirstOrDefault(b => b.SessionId == sessionId)?.Id;
+
+        return allBookings?.FirstOrDefault(b => b.SessionId == sessionId)?.Id;
     }
 
     private async Task RemoveBooking()
@@ -201,7 +202,7 @@
                 return;
             }
 
-            var response = await Http.DeleteAsync($"api/Bookings/{bookingId}");
+            var response = await Http.DeleteAsync($"api/Bookings/delete/{bookingId}");
 
             if (!response.IsSuccessStatusCode)
             {
@@ -227,19 +228,23 @@
         try 
         {
             isLoading = true;
-            allBookings = (await Http.GetFromJsonAsync<List<Session>>(
+            var bookings = (await Http.GetFromJsonAsync<List<Booking>>(
                             $"api/Bookings/User"
-                        ))?
-                        .OrderBy(s => s.StartTime)
-                        .ToList();
-            allBookings ??= new();
+                        ));
 
-            myBookings = allBookings
+            if (bookings != null)
+            {
+                allBookings = bookings.ToList();
+                mySessions = allBookings.Select(b => b.Session).OrderBy(s => s.StartTime).ToList();
+                Console.WriteLine(mySessions.Count);
+            }
+
+            myBookings = mySessions
                 .Where(s => s.StartTime >= DateTime.UtcNow)
                 .OrderBy(s => s.StartTime)
                 .ToList();
 
-            myPastBookings = allBookings
+            myPastBookings = mySessions
                 .Where(s => s.StartTime < DateTime.UtcNow)
                 .OrderBy(s => s.StartTime)
                 .ToList();

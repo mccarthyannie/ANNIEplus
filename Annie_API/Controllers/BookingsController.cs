@@ -30,52 +30,12 @@ namespace Annie_API.Controllers
             _configuration = configuration;
         }
 
-        // GET: api/Bookings
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<BookingDTO>>> GetBookings()
-        {
-            return await _context.Bookings.Select(b => 
-                                                        new BookingDTO 
-                                                            { Id = b.Id,
-                                                                Email = b.User.Email,
-                                                                SessionId = b.SessionId,
-                                                                SessionName = b.Session.Name,
-                                                                BookingDate = b.BookingDate})
-                                                            .ToListAsync();
-        }
 
-
-        // Returns a booking by its id 
-        // GET: api/Bookings/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<BookingDTO>> GetBooking(long id)
-        {
-            var booking = await _context.Bookings
-                                            .Include(b => b.User)
-                                            .Include(b => b.Session)
-                                            .FirstOrDefaultAsync(b=> b.Id == id);
-
-            if (booking == null)
-            {
-                return NotFound();
-            }
-
-            return Ok(new BookingDTO
-            {
-                Id = booking.Id,
-                Email = booking.User.Email,
-                SessionId = booking.SessionId,
-                SessionName = booking.Session.Name,
-                BookingDate = booking.BookingDate
-            });
-        }
-
-
-        // Returns the sessions associated with the user
-        // GET: api/Bookings/User/5
+        // Returns the bookings associated with the user
+        // GET: api/Bookings/User/
         [HttpGet("User")]
         [Authorize(Policy = "AnyValidUser")]
-        public async Task<ActionResult<List<Session>>> GetSessionsByUser()
+        public async Task<ActionResult<List<Booking>>> GetSessionsByUser()
         {
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
@@ -84,7 +44,7 @@ namespace Annie_API.Controllers
                 return Forbid();
             }
 
-            return await _context.Bookings.Where(u => u.User.Email == email).Select(u => u.Session).ToListAsync();
+            return await _context.Bookings.Where(u => u.User.Email == email).Include(b => b.Session).ToListAsync();
         }
 
 
@@ -103,13 +63,9 @@ namespace Annie_API.Controllers
 
 
         // Returns the bookings from a session
-
         // GET: api/Bookings/SessionBookings/5
-
         [HttpGet("SessionBookings/{id}")]
-
         [Authorize(Policy = "CanChangeSessions")]
-
         public async Task<ActionResult<List<BookingDTO>>> GetBookingBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new BookingDTO
@@ -195,9 +151,7 @@ namespace Annie_API.Controllers
                 Console.WriteLine("Error Sending Confirmation Email.");
             }
 
-            return CreatedAtAction("GetBooking", 
-                                    new { id = booking.Id }, 
-                                    new BookingDTO { 
+            return Ok(new BookingDTO { 
                                         Id = booking.Id,
                                         Email = user.Email,
                                         SessionId = booking.SessionId,
@@ -243,25 +197,28 @@ namespace Annie_API.Controllers
         }
 
 
-        // DELETE: api/Bookings/5
-        [HttpDelete("{id}")]
-        [Authorize]
+        // DELETE: api/Bookings/delete/5
+        [HttpDelete("delete/{id}")]
+        [Authorize(Policy = "AnyValidUser")]
         public async Task<IActionResult> DeleteBooking(long id)
         {
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
             if (String.IsNullOrEmpty(email))
             {
+                Console.WriteLine("Forbid");
                 return Forbid();
             }
             
             var booking = await _context.Bookings.Include(b => b.User).FirstOrDefaultAsync(b => b.Id == id);
             if (booking == null)
             {
+                Console.WriteLine("NotFOund");
                 return NotFound();
             }
 
-            if (booking.User.Email != email) 
+            if (booking.User.Email != email)
             {
+                Console.WriteLine("Forbid2");
                 return Forbid();
             }
 
@@ -299,7 +256,7 @@ namespace Annie_API.Controllers
             messageBody += $@"
                         <p style=""margin-top: 24px; font-weight: 500; color: #0ea5e9;"">We are excited to see you there!</p>
                         <div style=""margin-top: 32px;"">
-                            <a href=""{_configuration["Frontend Url"]}"" style=""text-decoration: none; color: #64748b; font-size: 14px; border-bottom: 1px solid #bae6fd; padding-bottom: 2px;"">Click Here to see your Bookings</a>
+                            <a href=""{_configuration["FrontendUrl"]}"" style=""text-decoration: none; color: #64748b; font-size: 14px; border-bottom: 1px solid #bae6fd; padding-bottom: 2px;"">Click Here to see your Bookings</a>
                         </div>
                     </div>
 

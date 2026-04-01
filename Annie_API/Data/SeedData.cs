@@ -11,19 +11,21 @@ namespace Annie_API.Data
     {
         private readonly DataContext _context;
         private readonly IUsersUnitOfWork _usersUnitOfWork;
+        private readonly IConfiguration _configuration;
         private readonly Authorizator _authorizator = new Authorizator();
 
-        public SeedData(DataContext context, IUsersUnitOfWork usersUnitOfWork)
+        public SeedData(DataContext context, IUsersUnitOfWork usersUnitOfWork, IConfiguration configuration)
         {
             _context = context;
             _usersUnitOfWork = usersUnitOfWork;
+            _configuration = configuration;
         }
 
         public async Task SeedAsync()
         {
             await _context.Database.MigrateAsync();
             await CheckRolesAsync();
-            await CheckUsersAsync("AnniePlus", "annieplus", "agustin.egui@gmail.com", UserRole.Admin);
+            await CheckUsersAsync("AnniePlus", _configuration["Admin:Password"], _configuration["Admin:Email"], UserRole.Admin);
         }
 
         private async Task CheckRolesAsync()

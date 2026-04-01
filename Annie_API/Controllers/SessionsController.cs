@@ -178,6 +178,7 @@ namespace Annie_API.Controllers
         {
             var session = await _context.Sessions
                 .Include(s => s.Bookings)
+                .ThenInclude(b => b.User)
                 .FirstOrDefaultAsync(s => s.Id == id);
 
 
@@ -188,16 +189,19 @@ namespace Annie_API.Controllers
 
             if(session.Bookings != null)
             {
-                var usersinSession = session.Bookings
-                                   .Select(b => b.User!)
-                                   .ToList();
+                var usersInSession = session.Bookings
+                                    .Where(b => b.User != null)
+                                    .Select(b => b.User!)
+                                    .ToList();
 
-                if (usersinSession.Count != 0)
+                if (usersInSession.Count != 0)
                 {
                     var result = true;
-                    foreach (var user in usersinSession)
+                    foreach (var user in usersInSession)
                     {
+                        Console.WriteLine(user.Email);
                         result = result && await SendSessionEmail(user, session, true);
+                        Console.WriteLine("4");
                     }
                     if (!result)
                     {
@@ -232,7 +236,7 @@ namespace Annie_API.Controllers
         // ideally, this would be done in the background to increase performance
         private async Task<bool> SendSessionEmail(User user, Session session, bool cancelled)
         {
-            var link = _configuration["Frontend Url"]!.TrimEnd('/');
+            var link = _configuration["FrontendUrl"]!.TrimEnd('/');
             
             string title, subject, notice, sessionInfo = string.Empty;
             

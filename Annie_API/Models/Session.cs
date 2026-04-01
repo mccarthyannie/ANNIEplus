@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace Annie_API.Models;
 /*
@@ -33,6 +34,7 @@ public class Session
 
     public string? Location { get; set; }
 
+    [JsonIgnore]
     public ICollection<Booking>? Bookings { get; set; } = new List<Booking>();
 
 
