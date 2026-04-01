@@ -154,7 +154,7 @@
 
     private (string bg, string border) GetSessionColour(string name)
     {
-        var colours = new[]
+        var palette = new[]
         {
             ("#E8EEE0", "#C4D0B0"),
             ("#F2E0D0", "#D4B49A"),
@@ -162,8 +162,8 @@
             ("#EDE0D8", "#C8B0A0"), 
             ("#E8E4D8", "#C4BEA8"), 
         };
-        var index = name.Sum(c => (int)c) % colours.Length;
-        return colours[index];
+        var index = Math.Abs(name.GetHashCode()) % palette.Length;
+        return palette[index];
     }
     protected override async Task OnInitializedAsync()
     {

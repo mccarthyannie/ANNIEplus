@@ -196,8 +196,8 @@
 
             if (bookingId == null)
             {
-                errorMessage = "Booking not found.";
-                Console.WriteLine("DELETE FAILED: bookingId null");
+                errorMessage = "Cannot find booking.";
+                Console.WriteLine("Delete failure: bookingId is null");
                 return;
             }
 
@@ -207,7 +207,7 @@
             {
                 var err = await response.Content.ReadAsStringAsync();
                 errorMessage = err;
-                Console.WriteLine("DELETE ERROR: " + err);
+                Console.WriteLine("Error deleting: " + err);
                 return;
             }
 
@@ -218,7 +218,7 @@
         catch (Exception ex)
         {
             errorMessage = ex.Message;
-            Console.WriteLine("EXCEPTION: " + ex.Message);
+            Console.WriteLine("Exception: " + ex.Message);
         }
     }
 

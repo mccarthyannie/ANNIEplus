@@ -68,30 +68,13 @@
     </div>
 
     <div class="form-group mb-3">
-        <label>Duration:</label>
+    <label>Duration:</label>
         <div class="d-flex gap-2 flex-wrap mb-2">
-            @foreach (var option in durationOptions)
-            {
-                <button type="button"
-                    class="btn @(durationMinutes == option.min && !customDuration ? "btn-secondary" : "btn-outline-secondary") btn-sm"
-                    @onclick="() => SetDuration(option.min)">
-                    @option.label
-                </button>
-            }
-            <button type="button"
-                class="btn @(customDuration ? "btn-secondary" : "btn-outline-secondary") btn-sm"
-                @onclick="EnableCustomDuration">
-                Custom
-            </button>
+            <button type="button" class="btn btn-sm @(durationMinutes == 30 && !customDuration ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => SetDuration(30)">30 min</button>
+            <button type="button" class="btn btn-sm @(durationMinutes == 60 && !customDuration ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => SetDuration(60)">1 hr</button>
+            <button type="button" class="btn btn-sm @(durationMinutes == 90 && !customDuration ? "btn-secondary" : "btn-outline-secondary")" @onclick="() => SetDuration(90)">1.5 hr</button>
+            <button type="button" class="btn btn-sm @(customDuration ? "btn-secondary" : "btn-outline-secondary")" @onclick="EnableCustomDuration">Custom</button>
         </div>
-        @if (customDuration)
-        {
-            <div class="d-flex align-items-center gap-2">
-                <InputNumber @bind-Value="durationMinutes" class="form-control" style="width:120px"
-                    @bind-Value:after="UpdateEndTime" min="15" max="480" step="15" />
-                <span class="text-muted">minutes</span>
-            </div>
-        }
     </div>
 
     <div class="alert alert-light mb-3 py-2">
@@ -155,9 +138,9 @@
             <div class="alert alert-danger d-flex align-items-center gap-3 py-2">
                 <span>Delete just this session or all with the same schedule?</span>
                 <button type="button" class="btn btn-danger btn-sm"
-                    @onclick="() => DeleteSession(false)">Just This One</button>
+                    @onclick="() => DeleteSession(false)">Just this session</button>
                 <button type="button" class="btn btn-danger btn-sm"
-                    @onclick="() => DeleteSession(true)">All in Series</button>
+                    @onclick="() => DeleteSession(true)">All reoccurring sessions</button>
                 <button type="button" class="btn btn-outline-secondary btn-sm"
                     @onclick="() => confirmingDelete = false">Cancel</button>
             </div>
@@ -172,7 +155,7 @@
 @if (submitted)
 {
     <div class="alert alert-success mt-3">
-        <p>Your session has been made.</p>
+        <p>Session completed.</p>
     </div>
 }
 
@@ -208,6 +191,14 @@
         ("30 min", 30), ("1 hr", 60), ("1.5 hr", 90), ("2 hr", 120)
     };
 
+    private DateTime ToLocal(DateTime utc)
+    {
+        DateTime forcedUtc = DateTime.SpecifyKind(utc, DateTimeKind.Utc);
+        
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(forcedUtc, nlZone);
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (!firstRender) return;
@@ -239,11 +230,16 @@
             var result = await Http.GetFromJsonAsync<Session>($"api/Sessions/{Id}");
             if (result != null)
             {
+                var localStart = ToLocal(result.StartTime);
+                var localEnd = ToLocal(result.EndTime);
+
                 session = result;
-                sessionDate = DateOnly.FromDateTime(result.StartTime);
-                startTimeStr = result.StartTime.ToString("HH:mm");
-                durationMinutes = (int)(result.EndTime - result.StartTime).TotalMinutes;
-                UpdateEndTime();
+                sessionDate = DateOnly.FromDateTime(localStart);
+                startTimeStr = localStart.ToString("HH:mm");
+                
+                durationMinutes = (int)(localEnd - localStart).TotalMinutes;
+                
+                UpdateEndTime(); 
             }
         }
 

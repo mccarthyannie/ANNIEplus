@@ -22,7 +22,7 @@
 }
 else if (!sessions.Any())
 {
-    <div class="empty-card">No upcoming sessions.</div>
+    <div class="empty-card">You have no upcoming sessions... yet.</div>
 }
 else
 {
@@ -77,14 +77,14 @@ else
 
                                 <button class="btn btn-sm @(isCheckedIn ? "btn-success" : "btn-outline-secondary") checkin-btn"
                                         @onclick="() => ToggleCheckIn(session.Id, user.Email!)">
-                                    @(isCheckedIn ? "✓ Present" : "Mark Present")
+                                    @(isCheckedIn ? "Present" : "Mark as Present")
                                 </button>
                             </div>
                         }
                     }
                     else
                     {
-                        <p class="text-muted">No one enrolled yet.</p>
+                        <p class="text-muted">No one has enrolled... yet.</p>
                     }
                 </div>
             }
