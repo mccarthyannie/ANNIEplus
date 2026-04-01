@@ -1,4 +1,5 @@
 <Solution>
   <Project Path="AnniePlus/AnniePlus.csproj" />
   <Project Path="Annie_API/Annie_API.csproj" Id="d4001d10-cc74-49cf-83e5-80c1c8352aae" />
+  <Project Path="Annie_Shared/Annie_Shared.csproj" Id="80a82741-a901-4c33-b7a7-8babc29dcac6" />
 </Solution>

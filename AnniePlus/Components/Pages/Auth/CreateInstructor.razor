@@ -1,10 +1,14 @@
-@page "/register"
+@page "/register-instructor"
+
 @rendermode InteractiveServer
+
+@using AnniePlus.Services
 @using Microsoft.EntityFrameworkCore
 @using Annie_API.Models
+@using Annie_API.DTOs
+
 @inject HttpClient Http
 @inject NavigationManager Nav
-@using Annie_API.DTOs
 
 <PageTitle>Create Session</PageTitle>
 
@@ -39,25 +43,36 @@
         </div>
     }
 
+    @if (success)
+    {
+        <div class="alert alert-success mt-3">Instructor registered successfully!</div>
+    }
+
     <button type="submit" class="btn btn-primary">Sign Up</button>
 
 </EditForm>
 
+
 @code {
     private RegisterUserRequest newUser = new();
     private string? errorMessage;
+    private bool success = false;
 
-    private async Task HandleRegister()
+   private async Task HandleRegister()
+{
+    errorMessage = null;
+    success = false;
+
+    var response = await Http.PostAsJsonAsync("api/register/instructor", newUser);
+
+    if (response.IsSuccessStatusCode)
     {
-        var response = await Http.PostAsJsonAsync("api/register", newUser);
-
-        if (response.IsSuccessStatusCode)
-        {
-            Nav.NavigateTo("/login");
-        }
-        else
-        {
-            errorMessage = await response.Content.ReadAsStringAsync();
-        }
+        success = true;
+        newUser = new();
     }
+    else
+    {
+        errorMessage = await response.Content.ReadAsStringAsync();
+    }
+}
 }

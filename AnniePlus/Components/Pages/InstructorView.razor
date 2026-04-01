@@ -1,0 +1,173 @@
+@page "/instructor-view"
+
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Annie_API.Models
+@using Annie_API.DTOs
+@using System.Security.Claims
+@inject HttpClient Http
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+
+<PageTitle>Instructor View</PageTitle>
+
+<div class="page-header">
+    <h1>My Sessions</h1>
+    <div class="title-divider"></div>
+</div>
+
+@if (sessions == null)
+{
+    <p class="text-muted">Loading...</p>
+}
+else if (!sessions.Any())
+{
+    <div class="empty-card">You have no upcoming sessions... yet.</div>
+}
+else
+{
+    <div class="bookings-list instructor-sessions-table">
+    @foreach (var session in sessions)
+    {
+        <div class="booking-card instructor-card">
+
+            <div class="booking-header">
+                <div class="booking-main">
+                    <div class="booking-name">@session.Name</div>
+                    <div class="booking-meta">
+                        <span>@ToLocal(session.StartTime).ToString("MMM dd, h:mm tt")</span>
+
+                        @if (!string.IsNullOrEmpty(session.Location))
+                        {
+                            <span>@session.Location</span>
+                        }
+
+                        <span>@session.Capacity spots remaining</span>
+                    </div>
+                </div>
+
+                <div class="booking-actions">
+                    <button class="btn btn-sm btn-outline-secondary"
+                            @onclick="() => ToggleEnrolled(session.Id)">
+                        @(expandedSessionId == session.Id ? "Hide" : "Manage")
+                    </button>
+
+                    <a href="/edit-session/@session.Id"
+                       class="btn btn-sm btn-primary">
+                        Edit
+                    </a>
+                </div>
+            </div>
+
+            @if (expandedSessionId == session.Id)
+            {
+                <div class="enrolled-list">
+                    @if (enrolledUsers.TryGetValue(session.Id, out var users) && users.Any())
+                    {
+                        @foreach (var user in users)
+                        {
+                            var checkKey = $"{session.Id}_{user.Email}";
+                            var isCheckedIn = checkedIn.Contains(checkKey);
+
+                            <div class="enrolled-row">
+                                <div class="enrolled-info">
+                                    <span class="enrolled-name">@user.Name</span>
+                                    <span class="enrolled-email">@user.Email</span>
+                                </div>
+
+                                <button class="btn btn-sm @(isCheckedIn ? "btn-success" : "btn-outline-secondary") checkin-btn"
+                                        @onclick="() => ToggleCheckIn(session.Id, user.Email!)">
+                                    @(isCheckedIn ? "Present" : "Mark as Present")
+                                </button>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <p class="text-muted">No one has enrolled... yet.</p>
+                    }
+                </div>
+            }
+
+        </div>
+    }
+</div>
+}
+
+@code {
+    private List<Session>? sessions;
+    private Dictionary<long, List<UserDTO>> enrolledUsers = new();
+    private HashSet<string> checkedIn = new();
+    private long? expandedSessionId;
+    private string? instructorName;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        var authState = await AuthProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (!user.Identity?.IsAuthenticated ?? true)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var role = user.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (role != "Instructor" && role != "Admin")
+        {
+            Nav.NavigateTo("/");
+            return;
+        }
+
+        instructorName = user.Identity?.Name;
+
+        var all = await Http.GetFromJsonAsync<List<Session>>("api/Sessions");
+        sessions = all?
+            .Where(s => s.Instructor == instructorName && s.StartTime >= DateTime.UtcNow)
+            .OrderBy(s => s.StartTime)
+            .ToList() ?? new();
+
+        StateHasChanged();
+    }
+
+    private async Task ToggleEnrolled(long sessionId)
+    {
+        if (expandedSessionId == sessionId)
+        {
+            expandedSessionId = null;
+            return;
+        }
+
+        expandedSessionId = sessionId;
+
+        if (!enrolledUsers.ContainsKey(sessionId))
+        {
+            var users = await Http.GetFromJsonAsync<List<UserDTO>>($"api/Bookings/Session/{sessionId}");
+            enrolledUsers[sessionId] = users ?? new();
+        }
+
+        StateHasChanged();
+    }
+
+    private void ToggleCheckIn(long sessionId, string userEmail)
+    {
+        var key = $"{sessionId}_{userEmail}";
+        if (checkedIn.Contains(key))
+            checkedIn.Remove(key);
+        else
+            checkedIn.Add(key);
+    }
+
+    private DateTime ToLocal(DateTime utc)
+    {
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, nlZone);
+    }
+}

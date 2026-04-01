@@ -1,8 +1,69 @@
 ﻿@page "/"
-@using Syncfusion.Blazor.Navigations
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
-<PageTitle>Home</PageTitle>
+<PageTitle>annie+</PageTitle>
 
-<h1>Annie+</h1>
-<a href="/login">Log in</a>
-<a href="/register">Sign up</a>
+<div class="annie-landing">
+    <div class="annie-hero">
+        <h1 class="annie-wordmark">aurannie<sup>+</sup></h1>
+        <p class="annie-tagline">farm your peace</p>
+
+        <AuthorizeView>
+        <Authorized>
+            @{
+                var role = context.User.Claims
+                    .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+            }
+            <div class="annie-btn-row">
+                @if (role == "Admin")
+                {
+                    <a href="/create-session" class="annie-btn-primary">add session</a>
+                    <a href="/register-instructor" class="annie-btn-secondary">create instructor</a>
+                }
+                else if (role == "Instructor")
+                {
+                    <a href="/instructor-view" class="annie-btn-primary">my sessions</a>
+                    <a href="/schedule" class="annie-btn-secondary">view schedule</a>
+                }
+                else
+                {
+                    <a href="/schedule" class="annie-btn-primary">view schedule</a>
+                    <a href="/bookings" class="annie-btn-secondary">my bookings</a>
+                }
+            </div>
+            <p style="font-size:13px;color:#9B8070;">
+                welcome back, @context.User.Identity?.Name!
+                <a href="/logout" style="color:#C4613A;">  log out</a>
+            </p>
+        </Authorized>
+            <NotAuthorized>
+                <div class="annie-btn-row">
+                    <a href="/schedule" class="annie-btn-primary">view schedule</a>
+                    <a href="/login" class="annie-btn-secondary">log in</a>
+                </div>
+                <p style="font-size:13px;color:#9B8070;">
+                    new here? <a href="/register" style="color:#C4613A;">create an account</a>
+                </p>
+            </NotAuthorized>
+        </AuthorizeView>
+    </div>
+
+    <div class="annie-divider"></div>
+
+    <div class="annie-features">
+        <div class="annie-feature">
+            <p class="annie-feature-title">trained instructors</p>
+            <p class="annie-feature-desc">experts to guide you through your practice</p>
+        </div>
+        <div class="annie-feature">
+            <p class="annie-feature-title">simple booking</p>
+            <p class="annie-feature-desc">online reservation for each class</p>
+        </div>
+        <div class="annie-feature">
+            <p class="annie-feature-title">immaculate vibes</p>
+            <p class="annie-feature-desc">beautiful site, beautiful mind</p>
+        </div>
+    </div>
+</div>

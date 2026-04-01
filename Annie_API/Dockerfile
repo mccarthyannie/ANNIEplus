@@ -2,9 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-COPY . .
+COPY ["Annie_API/Annie_API.csproj", "Annie_API/"]
+COPY ["Annie_Shared/Annie_Shared.csproj", "Annie_Shared/"]
 
-RUN dotnet restore
+RUN dotnet restore "Annie_API/Annie_API.csproj"
+
+COPY . . 
+WORKDIR "/src/Annie_API"
 RUN dotnet publish -c Release -o /app/publish
 
 # ---------- Runtime stage ----------

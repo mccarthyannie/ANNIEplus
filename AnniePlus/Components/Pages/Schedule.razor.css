@@ -1,73 +1,153 @@
-.scheduler-grid {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr); /* Forces exactly 7 columns */
-    gap: 0;
-    border-top: 1px solid #eee;
-    background: #fff;
-    min-height: 80vh;
+.schedule-page {
+    padding: 0;
+}
+ 
+.schedule-nav h2 {
+    font-size: 1.2rem;
+}
+ 
+.schedule-nav .btn {
+    border: 1px solid #C8A882;
+    border-radius: 999px;
+    color: #7C5C3E;
+    background: transparent;
 }
 
+.schedule-nav .btn h6 {
+    font-weight: 400;
+    font-size: 17px;
+    margin: 0;
+}
+ 
+.scheduler-grid {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 10px 40px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+}
+ 
+@media (max-width: 768px) {
+    .scheduler-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+ 
 .day-column {
-    border-right: 1px solid #eee;
+    background: #FAF6F0;
+    border-radius: 14px;
+    padding: 10px;
+    border: 1px solid #E8D5BC;
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
-
+ 
 .day-header {
-    padding: 15px;
     text-align: center;
-    background: #fafafa;
-    border-bottom: 2px solid #000;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(124, 92, 62, 0.15);
 }
-
+ 
 .day-name {
     display: block;
-    font-weight: bold;
+    font-size: 10px;
     text-transform: uppercase;
-    font-size: 0.75rem;
+    letter-spacing: 0.8px;
+    color: #9B8070;
+    margin-bottom: 3px;
 }
-
+ 
 .day-date {
-    font-size: 1.1rem;
-    color: #666;
+    display: block;
+    font-size: 13px;
+    color: #6B4E35;
 }
-
+ 
 .sessions-list {
-    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px;
 }
-
-.session-card {
-    border: 1px solid #e0e0e0;
-    padding: 12px;
-    background: white;
-    transition: 0.2s;
-}
-
-.session-card:hover {
-    border-color: #000;
-}
-
-.time { font-weight: 800; font-size: 0.8rem; }
-.name { font-size: 0.85rem; text-transform: uppercase; margin: 4px 0; font-weight: 600; }
-.instructor { font-size: 0.75rem; color: #888; }
-
-.book-btn {
-    width: 100%;
-    background: #000;
-    color: #fff;
-    border: none;
-    margin-top: 10px;
-    padding: 6px;
-    font-size: 0.7rem;
-    font-weight: bold;
-}
-
+ 
 .no-classes {
     text-align: center;
-    color: #ccc;
-    font-size: 0.8rem;
-    padding-top: 20px;
+    font-size: 11px;
+    color: #9B8070;
+    padding: 16px 4px;
+}
+ 
+.session-card {
+    border-radius: 10px;
+    padding: 10px;
+    border: 1px solid #D4B49A;
+    background: #F2E0D0;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+ 
+.session-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(44, 26, 14, 0.1);
+}
+
+.session-card:nth-child(3n+1) { background: #E8EEE0; border-color: #C4D0B0; }
+.session-card:nth-child(3n+2) { background: #F2E0D0; border-color: #D4B49A; }
+.session-card:nth-child(3n)   { background: #F5ECD9; border-color: #D9C5A0; }
+
+.session-card .name       { font-size: 12px; font-weight: 500; color: #2C1A0E; margin-bottom: 3px; }
+.session-card .time       { font-size: 11px; color: #6B4E35; margin-bottom: 2px; }
+.session-card .instructor { font-size: 10px; color: #9B8070; }
+.session-card .meta span  { font-size: 10px; font-weight: 500; color: #6B8C5A; margin-top: 4px; display: block; }
+
+.session-booked {
+    background: #EDE8E0 !important;
+    border-color: #A89070 !important;
+    opacity: 0.82;
+}
+ 
+.session-booked .meta span {
+    color: #6B5040 !important;
+}
+
+.session-unavailable {
+    opacity: 0.4;
+    filter: grayscale(100%);
+    pointer-events: none;
+}
+ 
+.popup-content {
+    background: #FAF6F0;
+    padding: 20px;
+    box-shadow: 0 12px 30px rgba(44, 26, 14, 0.15);
+    animation: fadeIn 0.2s ease;
+}
+ 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.alert {
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 14px;
+}
+
+.alert-success {
+    background: #eaf3de;
+    color: #3b6d11;
+}
+
+.alert-error {
+    background: #fcebeb;
+    color: #a32d2d;
+}
+
+.session-card.session-past {
+    opacity: 0.5;
+    filter: grayscale(30%);
+    cursor: default;
 }

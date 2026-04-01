@@ -1,2 +1,256 @@
 @page "/bookings"
 
+@rendermode InteractiveServer
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.EntityFrameworkCore
+@using Annie_API.Models
+@using AnniePlus.Components.Pages
+@using Annie_API.DTOs
+@using System.Net.Http.Json
+@inject HttpClient Http
+@using System.Security.Claims
+@using Microsoft.VisualStudio.Web.CodeGenerators.Mvc.Templates.BlazorIdentity.Pages
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthProvider
+@inject IJSRuntime JS
+
+<PageTitle>Bookings</PageTitle>
+
+<div class="page-header">
+        <h1>My Bookings</h1>
+        <div class="title-divider"></div>
+</div>
+
+<div class="bookings-page-layout">
+<div class="bookings-sidebar">
+    <AuthorizeView>
+        <Authorized>
+            <div class="profile-card">
+                <h3>@context.User.Identity?.Name</h3>
+                <p>@context.User.FindFirstValue(ClaimTypes.Email)</p>
+                <div class="profile-divider"></div>
+                <p><strong>@(myBookings?.Count ?? 0)</strong> upcoming · <strong>@(myPastBookings?.Count ?? 0)</strong> completed</p>
+                <div class="profile-links">
+                    <a href="/logout">Log Out</a>
+                </div>
+            </div>
+        </Authorized>
+    </AuthorizeView>
+</div>
+
+<div class="bookings-main">
+    <div class="page-header">
+        <h4>YOUR UPCOMING SESSIONS</h4>
+    </div>
+
+<div class="bookings-list">
+    @if (!myBookings?.Any() ?? true)
+    {
+        <div class="empty-card">No upcoming sessions... yet.</div>
+    }
+    else
+    {
+    @foreach (var booking in myBookings ?? new())
+    {
+        <div class = "booking-card">
+            <div class="booking-main">
+                <div class="booking-name">@booking.Name</div>
+                <div class="booking-meta">
+                    <span>@ToLocal(booking.StartTime).ToString("MMM dd")</span>
+                    <span>@booking.Instructor</span>
+                </div>
+            </div>
+
+            <div class="booking-time">
+                @ToLocal(booking.StartTime).ToString("h:mm tt")
+                <button class="unenroll-btn" @onclick="() => OpenPopup(booking)">
+                    Unenroll
+                </button>
+            </div>
+        </div>
+    }
+    }
+</div>
+<div class="bookings-list past-sessions">
+    <h2 class="past-header">PAST SESSIONS</h2>
+    @if (!myPastBookings?.Any() ?? true)
+    {
+        <div class="past-empty-card">No past sessions... yet.</div>
+    }
+    else
+    {
+    @foreach (var booking in myPastBookings ?? new())
+    {
+        <div class="booking-card past">
+            <div class="booking-main">
+                <div class="booking-name">@booking.Name</div>
+                <div class="booking-meta">
+                    <span>@ToLocal(booking.StartTime).ToString("MMM dd")</span>
+                    <span>@booking.Instructor</span>
+                </div>
+            </div>
+            <div class="booking-time">
+                @ToLocal(booking.StartTime).ToString("h:mm tt")
+            </div>
+        </div>
+    }
+    }
+</div>
+</div>
+</div>
+
+    <Popup @bind-Visible="showPopup">
+        <div class="popup-content" style="text-align: center; padding: 10px;">
+            <h3 style="text-transform: uppercase; margin-bottom: 20px;">Cancel @selectedBooking?.Name at @ToLocal(selectedBooking.StartTime).ToString("h:mm tt")</h3>
+            
+            @if (selectedBooking != null)
+            {
+                <div style="margin-bottom: 20px; line-height: 1.6;">
+                    <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
+                    <p>@ToLocal(selectedBooking.StartTime).ToString("dddd, MMM d")</p>
+                </div>
+            }
+
+            <div style="display: flex; gap: 10px; margin-top: 25px;">
+                <button class="unenroll-btn" @onclick="RemoveBooking">
+                    Unenroll
+                </button>
+            </div>
+        </div>
+    </Popup>
+
+
+@code 
+{
+    private bool isLoading;
+    private string? errorMessage;
+    private List<Session> allBookings;
+    private List<Session>? myBookings;
+    private List<Session>? myPastBookings;
+    private string? userEmail;
+    private string? userName;
+    private string? userRole;
+    private bool showPopup = false;
+    private Session? selectedBooking;
+    private Session? selectedSession;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
+    private ClaimsPrincipal? claimsPrincipal;
+
+    private DateTime ToLocal(DateTime utc)
+    {
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, nlZone);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender) return;
+
+        if (authenticationStateTask == null)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var authState = await authenticationStateTask;
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        userEmail = claimsPrincipal.FindFirstValue(ClaimTypes.Email);
+        userName  = claimsPrincipal.FindFirstValue(ClaimTypes.Name);
+        userRole  = claimsPrincipal.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        await LoadBookings();
+        StateHasChanged();
+    }
+
+    private void OpenPopup(Session booking)
+    {
+        selectedBooking = booking;
+        selectedSession = booking;
+        showPopup = true;
+    }
+
+    private async Task<long?> GetBookingId(long sessionId)
+    {
+        var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>("api/Bookings");
+        return bookings?.FirstOrDefault(b => b.SessionId == sessionId)?.Id;
+    }
+
+    private async Task RemoveBooking()
+    {
+        if (selectedBooking == null) return;
+
+        try
+        {
+            var bookingId = await GetBookingId(selectedBooking.Id);
+
+            if (bookingId == null)
+            {
+                errorMessage = "Cannot find booking.";
+                Console.WriteLine("Delete failure: bookingId is null");
+                return;
+            }
+
+            var response = await Http.DeleteAsync($"api/Bookings/{bookingId}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var err = await response.Content.ReadAsStringAsync();
+                errorMessage = err;
+                Console.WriteLine("Error deleting: " + err);
+                return;
+            }
+
+            showPopup = false;
+
+            await LoadBookings();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ex.Message;
+            Console.WriteLine("Exception: " + ex.Message);
+        }
+    }
+
+    private async Task LoadBookings()
+    {
+        try 
+        {
+            isLoading = true;
+            allBookings = (await Http.GetFromJsonAsync<List<Session>>(
+                            $"api/Bookings/User"
+                        ))?
+                        .OrderBy(s => s.StartTime)
+                        .ToList();
+            allBookings ??= new();
+
+            myBookings = allBookings
+                .Where(s => s.StartTime >= DateTime.UtcNow)
+                .OrderBy(s => s.StartTime)
+                .ToList();
+
+            myPastBookings = allBookings
+                .Where(s => s.StartTime < DateTime.UtcNow)
+                .OrderBy(s => s.StartTime)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading bookings: {ex.Message}";
+        }
+        finally 
+        {
+            isLoading = false;
+        }
+    }
+}

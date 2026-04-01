@@ -1,0 +1,148 @@
+.instructor-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 18px;
+}
+
+.booking-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.enrolled-list {
+    border-top: 1px solid #D9C5A0;
+    padding-top: 14px;
+    margin-top: 6px;
+    gap: 8px;
+}
+
+.enrolled-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #EDE4D6;
+}
+
+.enrolled-row:last-child {
+    border-bottom: none;
+}
+
+.enrolled-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.enrolled-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+    font-weight: 500;
+    color: #2C1A0E;
+}
+
+.enrolled-email {
+    font-size: 0.8rem;
+    color: #9B8070;
+}
+
+.btn {
+    border-radius: 999px;
+    font-size: 0.85rem;
+    padding: 6px 14px;
+    transition: all 0.18s ease;
+}
+
+.btn-primary {
+    background: #7C5C3E;
+    border: 1px solid #7C5C3E;
+    color: #fff;
+}
+
+.btn-primary:hover {
+    background: #6b4f35;
+    border-color: #6b4f35;
+}
+
+.btn-outline-secondary {
+    background: transparent;
+    border: 1px solid #C8A882;
+    color: #7C5C3E;
+}
+
+.btn-outline-secondary:hover {
+    background: #EDE4D6;
+}
+
+.checkin-btn {
+    border-radius: 999px;
+    min-width: 110px;
+    font-size: 0.8rem;
+    padding: 6px 14px;
+    border: 1px solid #C8A882;
+    color: #7C5C3E;
+    background: transparent;
+}
+
+.checkin-btn:hover {
+    background: #EDE4D6;
+}
+
+.checkin-btn.btn-success {
+    background: #7FA37C;
+    border-color: #7FA37C;
+    color: white;
+}
+
+.checkin-btn.btn-success:hover {
+    background: #6e936b;
+}
+
+.instructor-sessions-table {
+    border: 1px solid #D9C5A0;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.instructor-sessions-table .booking-card {
+    border: none;
+    border-bottom: 1px solid #D9C5A0;
+    border-radius: 0;
+}
+
+.instructor-sessions-table .booking-card:last-child {
+    border-bottom: none;
+}
+
+.instructor-sessions-table .booking-card:hover {
+    background: #EDE4D6;
+}
+
+.booking-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 0.85rem;
+    color: #7C5C3E;
+}
+
+.booking-main {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.booking-card.instructor-card > .booking-main,
+.booking-card.instructor-card > .booking-actions {
+    width: 100%;
+}
+
+.booking-card.instructor-card {
+    display: flex;
+}
+
+.instructor-sessions-table .booking-card {
+    padding: 14px 18px;
+}

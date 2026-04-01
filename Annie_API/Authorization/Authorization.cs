@@ -33,11 +33,18 @@ namespace Annie_API.Authorization
 
         public bool VerifyPassword(string password, string savedHash)
         {
+            if (password == null || password.Length < 6) {
+                return false; // Password must be at least 6 characters long
+            }
+
             byte[] hashBytes = Convert.FromBase64String(savedHash);
             byte[] salt = new byte[saltLength];
             Array.Copy(hashBytes, 0, salt, 0, saltLength);
 
             var hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, iterations, new HashAlgorithmName("SHA256"), hashLength);
+
+            Console.WriteLine(Convert.ToBase64String(hash));
+            Console.WriteLine(savedHash);
 
             for (int i = 0; i < hashLength; i++)
                 if (hashBytes[i + saltLength] != hash[i])

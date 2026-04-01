@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using System.Security.Cryptography;
 using Annie_API.Authorization;
 using Annie_API.DTOs;
+using Annie_API.Data;
 
 namespace Annie_API.Controllers
 {
@@ -33,7 +34,6 @@ namespace Annie_API.Controllers
             return await _context.Users
                 .Select(u => new UserDTO
             {
-                Id = u.Id,
                 Name = u.Name,
                 Email = u.Email,
                 Role = u.Role
@@ -48,7 +48,6 @@ namespace Annie_API.Controllers
                 .Where(u => u.Role == UserRole.Instructor)
                 .Select( u => new UserDTO
                 {
-                    Id = u.Id,
                     Name = u.Name,
                     Email = u.Email,
                     Role = u.Role
@@ -68,7 +67,6 @@ namespace Annie_API.Controllers
 
             return new UserDTO
             {
-                Id = user.Id,
                 Name = user.Name,
                 Email = user.Email,
                 Role = user.Role
@@ -76,9 +74,8 @@ namespace Annie_API.Controllers
         }
 
         // PUT: api/Users/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUser(long id, User user)
+        public async Task<IActionResult> PutUser(string id, User user)
         {
             if (id != user.Id)
             {
@@ -107,11 +104,10 @@ namespace Annie_API.Controllers
         }
 
         // POST: api/Users
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<User>> PostUser(User user)
         {
-            user.Password = _authorizator.HashPassword(user.Password);
+            user.PasswordHash = _authorizator.HashPassword(user.PasswordHash);
 
             _context.Users.Add(user);
             try
@@ -130,10 +126,16 @@ namespace Annie_API.Controllers
                 }
             }
 
-            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO 
-                                                                        { Id = user.Id,
-                                                                          Name = user.Name,
-                                                                          Email = user.Email});
+            return CreatedAtAction("GetUser", new { id = user.Id }, new UserDTO
+            {
+                Name = user.Name,
+                Email = user.Email,
+                Role = user.Role
+            });
+
+
+
+
         }
 
         // DELETE: api/Users/5
@@ -152,7 +154,7 @@ namespace Annie_API.Controllers
             return NoContent();
         }
 
-        private bool UserExists(long id)
+        private bool UserExists(string id)
         {
             return _context.Users.Any(e => e.Id == id);
         }

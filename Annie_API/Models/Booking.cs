@@ -1,6 +1,7 @@
 ﻿using Annie_API.DTOs;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization;
 
 namespace Annie_API.Models
 {
@@ -10,14 +11,22 @@ namespace Annie_API.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         [Required]
         public long Id { get; set; }
+
+
         [ForeignKey(nameof(User))]
         [Required]
-        public long UserId { get; set; }
-        public User User { get; set; }
+        public string UserId { get; set; } = null!;
+        
+        [JsonIgnore]
+        public User? User { get; set; }
+        
         [ForeignKey(nameof(Session))]
         [Required]
         public long SessionId { get; set; }
-        public Session Session { get; set; }
+
+        [JsonIgnore]
+        public Session? Session { get; set; }
+        
         [Required]
         public DateTime BookingDate { get; set; } = DateTime.UtcNow;
     }

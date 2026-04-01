@@ -13,67 +13,96 @@
 @inject IJSRuntime JS
 
 <PageTitle>Schedule</PageTitle>
+<div class="schedule-page">
+    <div class="schedule-nav d-flex align-items-center justify-content-between p-3">
+       <button class="btn" @onclick="GoToPreviousWeek">
+            <i class="bi bi-chevron-left"></i>
+            <h6>Previous</h6>
+        </button>  
+        
+        <h1 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h1>
 
-<div class="schedule-nav d-flex align-items-center justify-content-between p-3">
-    <button class="btn" @onclick="GoToPreviousWeek">
-        <i class="bi bi-chevron-left"></i> +
-    </button>
-    
-    <h2 class="m-0">@currentStartDate.ToString("MMMM yyyy")</h2>
-    
-    <button class="btn" @onclick="GoToNextWeek">
-        - <i class="bi bi-chevron-right"></i>
-    </button>
-</div>
+        <button class="btn" @onclick="GoToNextWeek">
+            <i class="bi bi-chevron-right"></i>
+            <h6>Next</h6>
+        </button> 
+    </div>
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4>Weekly Schedule</h4>
-    <NavLink class="nav-link" href="create-session">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
-     </NavLink>
-</div>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Weekly Schedule</h2>
+        <AuthorizeView>
+            <Authorized>
+                @if (context.User.Claims.FirstOrDefault(c => 
+                    c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value 
+                    is "Admin" or "Instructor")
+                {
+                    <NavLink class="nav-link" href="create-session">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Add Session
+                    </NavLink>
+                }
+            </Authorized>
+        </AuthorizeView>
+    </div>
 
-<div class="scheduler-grid">
-    @for (int i = 0; i < 7; i++)
+    @if (errorMessage != null)
     {
-        var targetDate = currentStartDate.AddDays(i);
-        var daySessions = sessions
-            .Where(s => s.StartTime.Date == targetDate.Date)
-            .OrderBy(s => s.StartTime)
-            .ToList();
-
-        <div class="day-column">
-            <div class="day-header">
-                <span class="day-name">@targetDate.ToString("ddd")</span>
-                <span class="day-date">@targetDate.ToString("MMM d")</span>
-            </div>
-
-            <div class="sessions-list">
-                @if (!daySessions.Any())
-                {
-                    <div class="no-classes">No Classes</div>
-                }
-                else
-                {
-                    @foreach (var session in daySessions)
-                    {
-                        <div class="session-card">
-                            <div class="name">@session.Name</div>
-                            <div class="time">@session.StartTime.ToString("h:mm tt") @Duration(session) min</div>
-                            <div class="instructor">@session.Instructor</div>
-                            
-                            <div class="meta">
-                                <span>@session.Capacity spots available</span>
-                            </div>
-                            
-                            <button class="book-btn" @onclick="() => OpenPopup(session)">Book</button>
-                        </div>
-                    }
-                }
-            </div>
+        <div class="alert @(isSuccess ? "alert-success" : "alert-error")">
+            @errorMessage
         </div>
     }
+
+    <div class="scheduler-grid">
+        @for (int i = 0; i < 7; i++)
+        {
+            var targetDate = currentStartDate.AddDays(i);
+            var daySessions = sessions
+                .Where(s => s.StartTime.Date == targetDate.Date)
+                .OrderBy(s => s.StartTime)
+                .ToList();
+
+            <div class="day-column">
+                <div class="day-header">
+                    <span class="day-name">@targetDate.ToString("ddd")</span>
+                    <span class="day-date">@targetDate.ToString("MMM d")</span>
+                </div>
+
+                <div class="sessions-list">
+                    @if (!daySessions.Any())
+                    {
+                        <div class="no-classes">No Classes</div>
+                    }
+                    else
+                    {
+                        @foreach (var session in daySessions)
+                        {
+                            var (bg, border) = GetSessionColour(session.Name);
+                            <div class="session-card @(IsUnavailable(session) ? "session-past" : "")"
+                                style="background: @bg; border-color: @border;"
+                                @onclick="() => HandleSessionClick(session)">
+                                <div class="name">@session.Name</div>
+                                <div class="time">@ToLocal(session.StartTime).ToString("h:mm tt") @Duration(session) min</div>
+                                <div class="instructor">@session.Instructor</div>
+                                <div class="meta">
+                                    <span>
+                                        @if (bookedSessionIds.Contains(session.Id))
+                                        { <text>✓ Booked</text> }
+                                        else if (session.Capacity <= 0)
+                                        { <text>Fully Booked</text> }
+                                        else if (session.StartTime <= DateTime.Now)
+                                        { <text>Session Passed</text> }
+                                        else
+                                        { <text>@session.Capacity spots available</text> }
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
     <Popup @bind-Visible="showPopup">
         <div class="popup-content" style="text-align: center; padding: 10px;">
             <h3 style="text-transform: uppercase; margin-bottom: 20px;">Confirm Booking</h3>
@@ -82,12 +111,12 @@
             {
                 <div style="margin-bottom: 20px; line-height: 1.6;">
                     <p style="font-size: 1.2rem; margin-bottom: 5px;">@selectedSession.Name</p>
-                    <p>@selectedSession.StartTime.ToString("dddd, MMM d")</p>
-                    <p><strong>@selectedSession.StartTime.ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                    <p>@ToLocal(selectedSession.StartTime).ToString("dddd, MMM d")</p>
+                    <p><strong>@ToLocal(selectedSession.StartTime).ToString("h:mm tt")</strong> (@Duration(selectedSession) min)</p>
+                    <p>@selectedSession.Description</p>
                     <p class="text-muted">Instructor: @selectedSession.Instructor</p>
                 </div>
             }
-
             <div style="display: flex; gap: 10px; margin-top: 25px;">
                 <button class="btn btn-dark w-100" @onclick="HandleBooking">
                     Confirm Booking
@@ -98,6 +127,9 @@
 
 @code 
 {
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
+
     private Booking booking = new();
     private DateTime currentStartDate = DateTime.Today;
     private bool showPopup = false;
@@ -106,6 +138,38 @@
     private string? errorMessage;
     private List<Session> sessions = new();
     public static UserDTO? CurrentUser;
+    private HashSet<long> bookedSessionIds = new();
+    private bool isSuccess;
+
+    private bool IsUnavailable(Session s) =>
+        s.StartTime <= DateTime.UtcNow || s.Capacity <= 0;
+
+    private ClaimsPrincipal? claimsPrincipal; 
+
+    private DateTime ToLocal(DateTime utc)
+    {
+        var nlZone = TimeZoneInfo.FindSystemTimeZoneById("America/St_Johns");
+        return TimeZoneInfo.ConvertTimeFromUtc(utc, nlZone);
+    }
+
+    private (string bg, string border) GetSessionColour(string name)
+    {
+        var palette = new[]
+        {
+            ("#E8EEE0", "#C4D0B0"),
+            ("#F2E0D0", "#D4B49A"),
+            ("#F5ECD9", "#D9C5A0"),
+            ("#EDE0D8", "#C8B0A0"), 
+            ("#E8E4D8", "#C4BEA8"), 
+        };
+        var index = Math.Abs(name.GetHashCode()) % palette.Length;
+        return palette[index];
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSessions();
+    }
+
 
     private async Task GoToNextWeek()
     {
@@ -113,52 +177,71 @@
         await LoadSessions();
     }
 
+
     private async Task GoToPreviousWeek()
     {
         currentStartDate = currentStartDate.AddDays(-7);
         await LoadSessions();
     }
 
+
     private async Task OpenPopup(Session session)
     {
         selectedSession = session;
 
-        showPopup = true;
+        var authState = await authenticationStateTask;
+        var role = authState.User.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (role == "Admin" || role == "Instructor")
+            Nav.NavigateTo($"/edit-session/{session.Id}");
+        else
+            showPopup = true;
     }
+
+
     private void ClosePopup() => showPopup = false;
 
-    protected override async Task OnInitializedAsync()
-    {   
-        await LoadSessions();
-    }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
+        if (!firstRender) return;
+
+        if (authenticationStateTask == null)
         {
-            var json = await JS.InvokeAsync<string?>("localStorage.getItem", "currentUser");
-        
-            if (json != null)
-            {
-                CurrentUser = System.Text.Json.JsonSerializer.Deserialize<UserDTO>(json);
-            }
-            else
-            {
-                Nav.NavigateTo("/login");
-            }
-            StateHasChanged();
+            Nav.NavigateTo("/login");
+            return;
         }
+
+        var authState = await authenticationStateTask;
+        claimsPrincipal = authState.User;
+
+        if (claimsPrincipal.Claims.Count() == 0)
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        await LoadSessions();
+        StateHasChanged();
     }
+
 
     private async Task LoadSessions()
     {
         try 
         {
             var url = $"api/Sessions?start={currentStartDate:yyyy-MM-dd}&end={currentStartDate.AddDays(7):yyyy-MM-dd}";
-            
+
             var result = await Http.GetFromJsonAsync<List<Session>>(url);
             sessions = result ?? new List<Session>();
             
+             if (CurrentUser != null)
+                {
+                    var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>($"api/Bookings/User");
+                    bookedSessionIds = bookings?.Select(b => b.SessionId).ToHashSet() ?? new();
+                }
+
             StateHasChanged(); 
         }
         catch (Exception ex)
@@ -167,53 +250,90 @@
         }
     }
 
+
     private string Duration(Session s) => 
         (s.EndTime - s.StartTime).TotalMinutes.ToString();
 
+    private async Task HandleSessionClick(Session session)
+    {
+        var authState = await authenticationStateTask;
+        var role = authState.User.Claims
+            .FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
+
+        if (role == "Admin" || role == "Instructor")
+        {
+            Nav.NavigateTo($"/edit-session/{session.Id}");
+            return;
+        }
+
+        if (bookedSessionIds.Contains(session.Id))
+            Nav.NavigateTo("/bookings");
+        else if (!IsUnavailable(session))
+            await OpenPopup(session);
+    }
+
     private async Task HandleBooking()
     {
+        var authState = await authenticationStateTask;
+        if (authState == null) return;
+
+        claimsPrincipal = authState.User;
+
         if (selectedSession == null) return;
 
-        if (CurrentUser == null)
+        if (claimsPrincipal == null)
         {
             Nav.NavigateTo("/login");
             return;
         }
 
-        var request = new 
-        {
-            UserId = CurrentUser.Id,
-            SessionId = selectedSession.Id
-        };
-
         try 
         {
-            var userId = CurrentUser?.Id;
-
-            if (userId == null)
+            if (claimsPrincipal.Claims.Count() == 0)
             {
-                errorMessage = "You must be logged in to book.";
+                Nav.NavigateTo("/login");
+                StateHasChanged();
+                return;
+            }
+
+            var email = claimsPrincipal.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Email)?.Value;
+
+            if (string.IsNullOrEmpty(email))
+            {
+                Nav.NavigateTo("/login");
                 StateHasChanged();
                 return;
             }
 
             var bookingRequest = new 
             { 
-                UserId = userId,
                 SessionId = selectedSession.Id
             };
 
             var response = await Http.PostAsJsonAsync("api/Bookings", bookingRequest);
-            
             if (response.IsSuccessStatusCode)
             {
+                isSuccess = true;
+                errorMessage = "Booking confirmed!";
                 showPopup = false;
-                errorMessage = null;
                 await LoadSessions();
+                _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        await InvokeAsync(StateHasChanged);
+                    });
             }
             else
             {
+                isSuccess = false;
                 errorMessage = await response.Content.ReadAsStringAsync();
+                _ = Task.Run(async () =>
+                    {
+                        await Task.Delay(3000);
+                        errorMessage = null;
+                        await InvokeAsync(StateHasChanged);
+                    });
             }
         }
         catch (Exception ex)
