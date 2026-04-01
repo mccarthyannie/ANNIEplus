@@ -101,7 +101,7 @@
 
     <Popup @bind-Visible="showPopup">
         <div class="popup-content" style="text-align: center; padding: 10px;">
-            <h3 style="text-transform: uppercase; margin-bottom: 20px;">Cancel @selectedBooking?.Name at @selectedBooking?.StartTime.ToString("h:mm tt")</h3>
+            <h3 style="text-transform: uppercase; margin-bottom: 20px;">Cancel @selectedBooking?.Name at @ToLocal(selectedBooking.StartTime).ToString("h:mm tt")</h3>
             
             @if (selectedBooking != null)
             {
