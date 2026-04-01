@@ -24,6 +24,8 @@ namespace Annie_API.Models
         [Required]
         public long SessionId { get; set; }
 
+        public bool CheckedIn { get; set; } = false;
+
         [JsonIgnore]
         public Session? Session { get; set; }
         

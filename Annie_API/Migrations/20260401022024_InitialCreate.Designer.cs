@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Annie_API.Migrations
 {
     [DbContext(typeof(DataContext))]
-    [Migration("20260325141852_InitialCreate")]
+    [Migration("20260401022024_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -35,6 +35,9 @@ namespace Annie_API.Migrations
 
                     b.Property<DateTime>("BookingDate")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<bool>("CheckedIn")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("SessionId")
                         .HasColumnType("bigint");
@@ -297,13 +300,13 @@ namespace Annie_API.Migrations
             modelBuilder.Entity("Annie_API.Models.Booking", b =>
                 {
                     b.HasOne("Annie_API.Models.Session", "Session")
-                        .WithMany()
+                        .WithMany("Bookings")
                         .HasForeignKey("SessionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Annie_API.Models.User", "User")
-                        .WithMany()
+                        .WithMany("Bookings")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
@@ -362,6 +365,16 @@ namespace Annie_API.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Annie_API.Models.Session", b =>
+                {
+                    b.Navigation("Bookings");
+                });
+
+            modelBuilder.Entity("Annie_API.Models.User", b =>
+                {
+                    b.Navigation("Bookings");
                 });
 #pragma warning restore 612, 618
         }

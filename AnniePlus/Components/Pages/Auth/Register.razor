@@ -58,20 +58,7 @@
     {
         var response = await Http.PostAsJsonAsync("api/register", newUser);
 
-        if (response.IsSuccessStatusCode)
-        {
-            var token = await response.Content.ReadFromJsonAsync<TokenDTO>(new System.Text.Json.JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            });
-            if (token != null)
-            {
-                await LoginService.LoginAsync(token.Token);
-                Nav.NavigateTo("/");
-            }
-            else errorMessage = "Error Registering User";
-        }
-        else
+        if (!response.IsSuccessStatusCode)
         {
             errorMessage = await response.Content.ReadAsStringAsync();
             Console.WriteLine("Error registering user:\n" + errorMessage);
