@@ -100,6 +100,7 @@ else
     private HashSet<string> checkedIn = new();
     private long? expandedSessionId;
     private string? instructorName;
+	private CheckInDTO checkInRequest = new();
 
     [CascadingParameter]
     private Task<AuthenticationState> authenticationStateTask { get; set; } = null!;
@@ -151,14 +152,35 @@ else
         {
             var users = await Http.GetFromJsonAsync<List<UserDTO>>($"api/Bookings/Session/{sessionId}");
             enrolledUsers[sessionId] = users ?? new();
-        }
 
+            var bookings = await Http.GetFromJsonAsync<List<BookingDTO>>($"api/Bookings/SessionBookings/{sessionId}"); 
+
+            checkedIn = bookings?
+            .Where(b => b.CheckedIn)
+            .Select(b => $"{sessionId}_{b.Email}")
+            .ToHashSet() ?? new HashSet<string>();
+        }
         StateHasChanged();
     }
 
-    private void ToggleCheckIn(long sessionId, string userEmail)
+    private async Task ToggleCheckIn(long sessionId, string userEmail)
     {
         var key = $"{sessionId}_{userEmail}";
+
+        checkInRequest = new CheckInDTO
+        {
+            sessionId = sessionId,
+
+            userEmail = userEmail
+        };
+
+        // flips the value of if the user is checked in
+
+        var response = await Http.PutAsJsonAsync("api/Bookings/check-in", checkInRequest);
+
+        if (!response.IsSuccessStatusCode)
+            Console.WriteLine(await response.Content.ReadAsStringAsync());
+
         if (checkedIn.Contains(key))
             checkedIn.Remove(key);
         else
