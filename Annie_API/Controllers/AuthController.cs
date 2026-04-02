@@ -158,7 +158,7 @@ namespace Annie_API.Controllers
             }
 
             var result = await _usersUnitOfWork.ConfirmEmailAsync(user, token);
-            if (!result.Succeeded) 
+            if (!result.Succeeded)
             {
                 return BadRequest(result.Errors.FirstOrDefault());
             }
@@ -185,6 +185,7 @@ namespace Annie_API.Controllers
             var response = await SendConfirmationEmailAsnyc(user);
             if (response)
             {
+                Console.WriteLine(response);
                 return NoContent();
             }
             else
@@ -279,9 +280,12 @@ namespace Annie_API.Controllers
 
             var confirmationToken = await _usersUnitOfWork.CreateConfirmationToken(user);
 
-            var frontendBase = _configuration["Frontend Url"]!.TrimEnd('/');
+            var frontendBase = _configuration["FrontendUrl"]!.TrimEnd('/');
+
             var encodedToken = WebUtility.UrlEncode(confirmationToken);
+
             var encodedId = WebUtility.UrlEncode(user.Id);
+
             var link = $"{frontendBase}/api/auth/ConfirmEmail?UserId={encodedId}&Token={encodedToken}";
 
             string uniqueId = Guid.NewGuid().ToString().Substring(0, 8);
