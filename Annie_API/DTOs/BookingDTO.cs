@@ -9,6 +9,9 @@ public class BookingDTO
 	public string Email { get; set; } = null!;
     [Required]
     public long SessionId { get; set; } 
+
+    public bool CheckedIn { get; set; } = false;
+
     public string SessionName { get; set; } = "Default Session";
     public DateTime BookingDate { get; set; } = DateTime.UtcNow;
 }

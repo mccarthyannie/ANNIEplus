@@ -187,6 +187,7 @@ namespace Annie_API.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     UserId = table.Column<string>(type: "text", nullable: false),
                     SessionId = table.Column<long>(type: "bigint", nullable: false),
+                    CheckedIn = table.Column<bool>(type: "boolean", nullable: false),
                     BookingDate = table.Column<DateTime>(type: "timestamp without time zone", nullable: false)
                 },
                 constraints: table =>

@@ -74,8 +74,8 @@ namespace Annie_API.Controllers
         // Returns the sessions associated with the user
         // GET: api/Bookings/User/5
         [HttpGet("User")]
-        [Authorize]
-        public async Task<ActionResult<List<Session>>> GetBookingByUser()
+        [Authorize(Policy = "AnyValidUser")]
+        public async Task<ActionResult<List<Session>>> GetSessionsByUser()
         {
             var email = User.FindFirst(ClaimTypes.Email)?.Value;
 
@@ -92,7 +92,7 @@ namespace Annie_API.Controllers
         // GET: api/Bookings/Session/5
         [HttpGet("Session/{id}")]
         [Authorize(Policy = "CanChangeSessions")]
-        public async Task<ActionResult<List<UserDTO>>> GetBookingBySession(long id)
+        public async Task<ActionResult<List<UserDTO>>> GetUsersBySession(long id)
         {
             return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new UserDTO 
                                                                                             {Name = b.User.Name,
@@ -100,6 +100,29 @@ namespace Annie_API.Controllers
                                                                                                 Role = b.User.Role}) 
                                                                                                 .ToListAsync();
         }
+
+
+        // Returns the bookings from a session
+
+        // GET: api/Bookings/SessionBookings/5
+
+        [HttpGet("SessionBookings/{id}")]
+
+        [Authorize(Policy = "CanChangeSessions")]
+
+        public async Task<ActionResult<List<BookingDTO>>> GetBookingBySession(long id)
+        {
+            return await _context.Bookings.Where(b => b.SessionId == id).Select(b => new BookingDTO
+            {
+                Id = b.Id,
+                Email = b.User.Email,
+                SessionId = b.SessionId,
+                SessionName = b.Session.Name,
+                BookingDate = b.BookingDate,
+                CheckedIn = b.CheckedIn
+            }).ToListAsync();
+        }
+
 
         // POST: api/Bookings
         [HttpPost]
@@ -181,6 +204,44 @@ namespace Annie_API.Controllers
                                         SessionName = session.Name,
                                         BookingDate = booking.BookingDate});
         }
+
+        // PUT: api/Bookings/check-in
+        [HttpPut("check-in")]
+        [Authorize(Policy = "CanChangeSessions")]
+        public async Task<ActionResult> CheckInUser(CheckInDTO request)
+        {
+            if (request == null)
+            {
+                return BadRequest("Request cant be null");
+            }
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.userEmail);
+
+            if (user == null)
+            {
+                return BadRequest("User and Session must be provided.");
+            }
+
+            var booking = await _context.Bookings.FirstOrDefaultAsync(b => b.SessionId == request.sessionId && b.UserId == user.Id);
+            if (booking == null)
+            {
+                return NotFound("Booking was not found");
+            }
+
+            bool wasChecked = booking.CheckedIn;
+            booking.CheckedIn = !wasChecked;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest("The booking could not be processed. Error: " + ex.Message);
+            }
+            return Ok();
+        }
+
 
         // DELETE: api/Bookings/5
         [HttpDelete("{id}")]
